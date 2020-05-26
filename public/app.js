@@ -139,7 +139,7 @@ async function joinRoomById(roomId) {
 		const calleeCandidatesCollection = roomRef.collection('calleeCandidates');
 		peerConnection.addEventListener('icecandidate', event => {
 			if (!event.candidate) {
-				log('Got final candidate!');
+				log('Got final candidate!', event.candidate);
 				return;
 			}
 			log('Got candidate: ', event.candidate);
