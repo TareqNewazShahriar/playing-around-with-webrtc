@@ -1,5 +1,3 @@
-mdc.ripple.MDCRipple.attachTo(document.querySelector('.mdc-button'));
-
 const configuration = {
 	iceServers: [
 		{
@@ -15,7 +13,6 @@ const configuration = {
 let peerConnection = null;
 let localStream = null;
 let remoteStream = null;
-let roomDialog = null;
 let roomId = null;
 
 function init() {
@@ -23,7 +20,6 @@ function init() {
 	document.querySelector('#hangupBtn').addEventListener('click', hangUp);
 	document.querySelector('#createBtn').addEventListener('click', createRoom);
 	document.querySelector('#joinBtn').addEventListener('click', joinRoom);
-	roomDialog = new mdc.dialog.MDCDialog(document.querySelector('#room-dialog'));
 }
 
 async function createRoom() {
@@ -55,8 +51,8 @@ async function createRoom() {
 	await roomRef.set(roomWithOffer);
 	roomId = roomRef.id;
 	log(`New room created with SDP offer. Room ID: ${roomRef.id}`);
-	document.querySelector(
-		'#currentRoom').innerText = `Current room is ${roomRef.id} - You are the caller!`;
+	document.getElementById('createdRoomId').value = roomRef.id;
+	document.getElementById('created-id').style.display = 'block';
 	// Code for creating a room above
 
 
@@ -110,15 +106,7 @@ function joinRoom() {
 	document.querySelector('#createBtn').disabled = true;
 	document.querySelector('#joinBtn').disabled = true;
 
-	document.querySelector('#confirmJoinBtn')
-		.addEventListener('click', async () => {
-			roomId = document.querySelector('#room-id').value;
-			log('Join room: ', roomId);
-			document.querySelector(
-				'#currentRoom').innerText = `Current room is ${roomId} - You are the callee!`;
-			await joinRoomById(roomId);
-		}, { once: true });
-	roomDialog.open();
+	joinRoomById(prompt("Enter Room ID"));
 }
 
 async function joinRoomById(roomId) {
@@ -265,6 +253,6 @@ init();
 
 var clog = document.getElementById('log');
 function log(...params) {
-	clog.innerHTML += '\n' + params.map(x=> JSON.stringify(x)).join(' \\\\ ');
+	clog.innerHTML += '\n\n' + params.map(x => JSON.stringify(x)).join(' \\\\ ');
 	console.log.apply(console, params);
 }
