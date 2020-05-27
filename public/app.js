@@ -39,6 +39,18 @@ async function createRoom() {
 		peerConnection.addTrack(track, localStream);
 	});
 
+	// Code for collecting ICE candidates below
+	const callerCandidatesCollection = roomRef.collection('callerCandidates');
+	peerConnection.addEventListener('icecandidate', event => {
+		if (!event.candidate) {
+			// After collecting all candidates, event will be fired once again with a null
+			return;
+		}
+		log('Got caller candidate: ', event.candidate);
+		callerCandidatesCollection.add(event.candidate.toJSON()).catch(err => log('------err---', err));
+	});
+	// Code for collecting ICE candidates above
+
 	// Code for creating a room below
 	const offer = await peerConnection.createOffer();
 	await peerConnection.setLocalDescription(offer);
@@ -56,21 +68,6 @@ async function createRoom() {
 	document.getElementById('createdRoomId').value = roomRef.id;
 	document.getElementById('created-id').style.display = 'block';
 	// Code for creating a room above
-
-
-	// Code for collecting ICE candidates below
-	const callerCandidatesCollection = roomRef.collection('callerCandidates');
-
-	peerConnection.addEventListener('icecandidate', event => {
-		if (!event.candidate) {
-			// After collecting all candidates, event will be fired once again with a null
-			return;
-		}
-		log('Got caller candidate: ', event.candidate);
-		callerCandidatesCollection.add(event.candidate.toJSON()).catch(err => log('------err---', err));
-	});
-	// Code for collecting ICE candidates above
-
 
 	peerConnection.addEventListener('track', event => {
 		log('Got remote track:', event.streams[0]);
@@ -167,12 +164,6 @@ async function joinRoomById(roomId) {
 	// Code for creating SDP answer above
 
 	// Listening for remote ICE candidates below
-	// const callerCandidates = await roomRef.collection('callerCandidates').get();
-	// log('-------', roomSnapshot);
-	// callerCandidates.forEach(async candidate => {
-	// 	log('----', candidate);
-	// });
-
 	roomRef.collection('callerCandidates').onSnapshot(snapshot => {
 		snapshot.docChanges().forEach(async change => {
 			if (change.type === 'added') {
@@ -182,6 +173,14 @@ async function joinRoomById(roomId) {
 			}
 		});
 	});
+	/// ---another way of doing this---
+	// const callerCandidates = await roomRef.collection('callerCandidates').get();
+	// callerCandidates.forEach(async candidate => {
+	//		let data = candidate.data();
+	// 	log('----', data);
+	//		await peerConnection.addIceCandidate(new RTCIceCandidate(data));
+	// });
+	/// -------
 	// Listening for remote ICE candidates above
 }
 
