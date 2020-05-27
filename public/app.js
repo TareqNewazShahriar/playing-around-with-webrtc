@@ -180,8 +180,17 @@ async function joinRoomById(roomId) {
 }
 
 async function openUserMedia(e) {
-	const stream = await navigator.mediaDevices.getUserMedia(
-		{ video: true, audio: true });
+	let stream;
+	try {
+		stream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+		/* use the stream */
+	} catch (err) {
+		let msg = 'Error on accessing devices. Is camera in access?';
+		log(msg, err);
+		alert(msg);
+		return;
+	}
+
 	document.querySelector('#localVideo').srcObject = stream;
 	localStream = stream;
 	remoteStream = new MediaStream();
