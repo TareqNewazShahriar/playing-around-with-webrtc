@@ -244,23 +244,21 @@ async function hangUp(e) {
 }
 
 function registerPeerConnectionListeners() {
-	peerConnection.addEventListener('icegatheringstatechange', () => {
-		log(
-			`ICE gathering state changed: ${peerConnection.iceGatheringState}`);
-	});
+	peerConnection.addEventListener('icegatheringstatechange', e => 
+		log(`ICE gathering state changed: ${peerConnection.iceGatheringState}`, e)
+	);
 
-	peerConnection.addEventListener('connectionstatechange', () => {
-		log(`Connection state change: ${peerConnection.connectionState}`);
-	});
+	peerConnection.addEventListener('connectionstatechange', e =>
+		log(`Connection state change: ${peerConnection.connectionState}`, e)
+	);
 
-	peerConnection.addEventListener('signalingstatechange', () => {
-		log(`Signaling state change: ${peerConnection.signalingState}`);
-	});
+	peerConnection.addEventListener('signalingstatechange', e =>
+		log(`Signaling state change: ${peerConnection.signalingState}`, e)
+	);
 
-	peerConnection.addEventListener('iceconnectionstatechange ', () => {
-		log(
-			`ICE connection state change: ${peerConnection.iceConnectionState}`);
-	});
+	peerConnection.addEventListener('iceconnectionstatechange ', e =>
+		log(`ICE connection state change: ${peerConnection.iceConnectionState}`, e)
+	);
 }
 
 function log(...params) {
