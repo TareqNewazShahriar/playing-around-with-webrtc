@@ -63,11 +63,11 @@ async function createRoom() {
 
 	peerConnection.addEventListener('icecandidate', event => {
 		if (!event.candidate) {
-			log('Got final candidate!');
+			// After collecting all candidates, event will be fired once again with a null
 			return;
 		}
-		log('Got candidate: ', event.candidate);
-		callerCandidatesCollection.add(event.candidate.toJSON());
+		log('Got caller candidate: ', event.candidate);
+		callerCandidatesCollection.add(event.candidate.toJSON()).catch(err => log('------err---', err));
 	});
 	// Code for collecting ICE candidates above
 
@@ -113,7 +113,7 @@ function joinRoom() {
 
 async function joinRoomById(roomId) {
 	const db = firebase.firestore();
-	const roomRef = db.collection('rooms').doc(`${roomId}`);
+	const roomRef = db.collection('rooms').doc(roomId);
 	const roomSnapshot = await roomRef.get();
 	log('Got room:', roomSnapshot.exists);
 
@@ -133,10 +133,10 @@ async function joinRoomById(roomId) {
 	const calleeCandidatesCollection = roomRef.collection('calleeCandidates');
 	peerConnection.addEventListener('icecandidate', event => {
 		if (!event.candidate) {
-			// After collecting all candidates, event will be fired with a null
+			// After collecting all candidates, event will be fired once again with a null
 			return;
 		}
-		log('Got candidate: ', event.candidate);
+		log('Got callee candidate: ', event.candidate);
 		calleeCandidatesCollection.add(event.candidate.toJSON()); // store to db
 	});
 	// Code for collecting ICE candidates above
@@ -167,6 +167,12 @@ async function joinRoomById(roomId) {
 	// Code for creating SDP answer above
 
 	// Listening for remote ICE candidates below
+	// const callerCandidates = await roomRef.collection('callerCandidates').get();
+	// log('-------', roomSnapshot);
+	// callerCandidates.forEach(async candidate => {
+	// 	log('----', candidate);
+	// });
+
 	roomRef.collection('callerCandidates').onSnapshot(snapshot => {
 		snapshot.docChanges().forEach(async change => {
 			if (change.type === 'added') {
@@ -182,7 +188,7 @@ async function joinRoomById(roomId) {
 async function openUserMedia(e) {
 	let stream;
 	try {
-		stream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+		stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
 		/* use the stream */
 	} catch (err) {
 		let msg = 'Error on accessing devices. Is camera in access?';
@@ -223,8 +229,7 @@ async function hangUp(e) {
 	document.querySelector('#joinBtn').disabled = true;
 	document.querySelector('#createBtn').disabled = true;
 	document.querySelector('#hangupBtn').disabled = true;
-	document.querySelector('#currentRoom').innerText = '';
-
+	
 	// Delete room on hangup
 	if (roomId) {
 		const db = firebase.firestore();
@@ -244,7 +249,7 @@ async function hangUp(e) {
 }
 
 function registerPeerConnectionListeners() {
-	peerConnection.addEventListener('icegatheringstatechange', e => 
+	peerConnection.addEventListener('icegatheringstatechange', e =>
 		log(`ICE gathering state changed: ${peerConnection.iceGatheringState}`, e)
 	);
 
