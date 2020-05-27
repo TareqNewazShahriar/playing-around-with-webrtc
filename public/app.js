@@ -259,5 +259,4 @@ function log(...params) {
 	console.log.apply(console, params);
 }
 
-
 init();

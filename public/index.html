@@ -25,7 +25,7 @@
 		<button disabled id="hangupBtn">Hangup</button>
 	</div>
 	<div id="created-id" style="display: none;">
-		You're the caller. Room ID: <input id="createdRoomId" type="text" readonly />
+		You're the caller. Room ID: <input id="createdRoomId" type="text" readonly onfocus="this.select()" />
 	</div>
 	<div id="videos">
 		<video id="localVideo" autoplay playsinline></video>
