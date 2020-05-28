@@ -37,7 +37,11 @@
 		<pre id="log"></pre>
 	</div>
 	
-	<script src="app.js"></script>
+	<script>
+		let script = document.createElement('script');
+		script.src = `app.js?v=${new Date().getTime()}`
+		document.body.appendChild(script);
+	</script>
 </body>
 
 </html>
