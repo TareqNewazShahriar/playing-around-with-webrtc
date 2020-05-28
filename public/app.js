@@ -273,7 +273,7 @@ function registerPeerConnectionListeners() {
 }
 
 function log(...params) {
-	logPanel.innerHTML += '\n\n' + params.join(' \\\\ ');
+	logPanel.innerHTML += '\n\n' + params.map(x => JSON.stringify(x)).join(' \\\\ ');
 	console.log.apply(console, params);
 }
 
