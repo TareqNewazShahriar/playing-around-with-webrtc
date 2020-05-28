@@ -1,11 +1,16 @@
 const configuration = {
 	iceServers: [
+		// {
+		// 	urls: [
+		// 		'stun:stun1.l.google.com:19302',
+		// 		'stun:stun2.l.google.com:19302',
+		// 	]
+		// }
 		{
-			urls: [
-				'stun:stun1.l.google.com:19302',
-				'stun:stun2.l.google.com:19302',
-			],
-		},
+			urls: "turn:asia.myturnserver.net",
+			username: "allie@oopcode.com",
+			credential: "topsecretpassword"
+		}
 	],
 	iceCandidatePoolSize: 10,
 };
@@ -228,7 +233,7 @@ async function hangUp(e) {
 	document.querySelector('#joinBtn').disabled = true;
 	document.querySelector('#createBtn').disabled = true;
 	document.querySelector('#hangupBtn').disabled = true;
-	
+
 	// Delete room on hangup
 	if (roomId) {
 		const db = firebase.firestore();
