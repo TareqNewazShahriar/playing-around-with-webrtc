@@ -18,10 +18,11 @@ const configuration = {
 let peerConnection = null;
 let localStream = null;
 let remoteStream = null;
+let remoteStreamList = [];
 let roomId = null;
 var logPanel = null;
 var ringtone = null;
-var isCaller = false;
+var isCaller = undefined;
 
 function init() {
 	document.querySelector('#cameraBtn').addEventListener('click', openUserMedia);
@@ -81,6 +82,13 @@ async function createRoom() {
 	document.getElementById('created-id').style.display = 'block';
 	// Code for creating a room above
 
+	peerConnection.addEventListener('track', event => {
+		log('Got remote track:', event.streams[0]);
+		event.streams[0].getTracks().forEach(track => {
+			log('Add a track to the remoteStream:', track);
+			remoteStream.addTrack(track);
+		});
+	});
 
 	// Listening for remote session description below
 	roomRef.onSnapshot(async snapshot => {
@@ -114,6 +122,9 @@ function joinRoom() {
 }
 
 async function joinRoomById(roomId) {
+	isCaller = false;
+	document.querySelector('#remoteVideo').srcObject = remoteStream;
+	
 	const db = firebase.firestore();
 	const roomRef = db.collection('rooms').doc(roomId);
 	const roomSnapshot = await roomRef.get();
@@ -143,7 +154,13 @@ async function joinRoomById(roomId) {
 	});
 	// Code for collecting ICE candidates above
 
-	addRemoteTrack(peerConnection, remoteStream);
+	peerConnection.addEventListener('track', event => {
+		log('Got remote track:', event.streams[0]);
+		event.streams[0].getTracks().forEach(track => {
+			log('Add a track to the remoteStream:', track);
+			remoteStream.addTrack(track);
+		});
+	});
 
 	// Code for creating SDP answer with caller's offer below
 	const offer = roomSnapshot.data().offer;
@@ -198,8 +215,7 @@ async function openUserMedia(e) {
 	document.querySelector('#localVideo').srcObject = stream;
 	localStream = stream;
 	remoteStream = new MediaStream();
-	document.querySelector('#remoteVideo').srcObject = remoteStream;
-
+	
 	log('Stream:', document.querySelector('#localVideo').srcObject);
 	document.querySelector('#cameraBtn').disabled = true;
 	document.querySelector('#joinBtn').disabled = false;
@@ -256,11 +272,14 @@ function registerPeerConnectionListeners() {
 
 		if (isCaller && peerConnection.connectionState === 'connected') {
 			ringtone.play();
-			let result = confirm('Answer');
-			ringtone.pause();
-			ringtone.currentTime = 0;
-			if(result)
-				addRemoteTrack(peerConnection, remoteStream);
+			let ans = document.getElementById('ans');
+			ans.onclick = function () {
+				ringtone.pause();
+				ringtone.currentTime = 0;
+				document.querySelector('#remoteVideo').srcObject = remoteStream;
+				ans.style.display = 'none';
+			}
+			ans.style.display = 'block';
 		}
 	});
 
@@ -277,16 +296,5 @@ function log(...params) {
 	logPanel.innerHTML += '\n\n' + params.map(x => JSON.stringify(x)).join(' \\\\ ');
 	console.log.apply(console, params);
 }
-
-function addRemoteTrack(peerConnection, stream) {
-	peerConnection.addEventListener('track', event => {
-		log('Got remote track:', event.streams[0]);
-		event.streams[0].getTracks().forEach(track => {
-			log('Add a track to the remoteStream:', track);
-			stream.addTrack(track);
-		});
-	});
-}
-
 
 init();
