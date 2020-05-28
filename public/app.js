@@ -7,7 +7,7 @@ const configuration = {
 		// 	]
 		// }
 		{
-			url: 'turn:192.158.29.39:3478?transport=udp',
+			url: 'turn:192.158.29.39:3478?transport=tcp',
 			credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
 			username: '28224511:1379330808'
 		}
@@ -112,7 +112,7 @@ function joinRoom() {
 	document.querySelector('#createBtn').disabled = true;
 	document.querySelector('#joinBtn').disabled = true;
 
-	joinRoomById(prompt("Enter Room ID"));
+	joinRoomById(prompt("Enter Call ID"));
 }
 
 async function joinRoomById(roomId) {
@@ -122,7 +122,7 @@ async function joinRoomById(roomId) {
 	log('Got room:', roomSnapshot.exists);
 
 	if (!roomSnapshot.exists) {
-		alert('Room not found');
+		alert('Call ID not found');
 		return;
 	}
 
