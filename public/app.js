@@ -27,6 +27,8 @@ function init() {
 	document.querySelector('#createBtn').addEventListener('click', createRoom);
 	document.querySelector('#joinBtn').addEventListener('click', joinRoom);
 	logPanel = document.getElementById('log');
+
+	log('ice configuration', configuration);
 }
 
 async function createRoom() {
