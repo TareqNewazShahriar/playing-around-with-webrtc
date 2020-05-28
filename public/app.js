@@ -20,6 +20,8 @@ let localStream = null;
 let remoteStream = null;
 let roomId = null;
 var logPanel = null;
+var ringtone = null;
+var isCaller = false;
 
 function init() {
 	document.querySelector('#cameraBtn').addEventListener('click', openUserMedia);
@@ -27,11 +29,14 @@ function init() {
 	document.querySelector('#createBtn').addEventListener('click', createRoom);
 	document.querySelector('#joinBtn').addEventListener('click', joinRoom);
 	logPanel = document.getElementById('log');
+	ringtone = document.getElementById('ringtone');
 
 	log('ice configuration', configuration);
 }
 
+
 async function createRoom() {
+	isCaller = true;
 	document.querySelector('#createBtn').disabled = true;
 	document.querySelector('#joinBtn').disabled = true;
 	const db = firebase.firestore();
@@ -76,13 +81,6 @@ async function createRoom() {
 	document.getElementById('created-id').style.display = 'block';
 	// Code for creating a room above
 
-	peerConnection.addEventListener('track', event => {
-		log('Got remote track:', event.streams[0]);
-		event.streams[0].getTracks().forEach(track => {
-			log('Add a track to the remoteStream:', track);
-			remoteStream.addTrack(track);
-		});
-	});
 
 	// Listening for remote session description below
 	roomRef.onSnapshot(async snapshot => {
@@ -145,13 +143,7 @@ async function joinRoomById(roomId) {
 	});
 	// Code for collecting ICE candidates above
 
-	peerConnection.addEventListener('track', event => {
-		log('Got remote track:', event.streams[0]);
-		event.streams[0].getTracks().forEach(track => {
-			log('Add a track to the remoteStream:', track);
-			remoteStream.addTrack(track);
-		});
-	});
+	addRemoteTrack(peerConnection, remoteStream);
 
 	// Code for creating SDP answer with caller's offer below
 	const offer = roomSnapshot.data().offer;
@@ -259,9 +251,18 @@ function registerPeerConnectionListeners() {
 		log(`ICE gathering state changed: ${peerConnection.iceGatheringState}`, e)
 	);
 
-	peerConnection.addEventListener('connectionstatechange', e =>
+	peerConnection.addEventListener('connectionstatechange', e => {
 		log(`Connection state change: ${peerConnection.connectionState}`, e)
-	);
+
+		if (isCaller && peerConnection.connectionState === 'connected') {
+			ringtone.play();
+			let result = confirm('Answer');
+			ringtone.pause();
+			ringtone.currentTime = 0;
+			if(result)
+				addRemoteTrack(peerConnection, remoteStream);
+		}
+	});
 
 	peerConnection.addEventListener('signalingstatechange', e =>
 		log(`Signaling state change: ${peerConnection.signalingState}`, e)
@@ -276,5 +277,16 @@ function log(...params) {
 	logPanel.innerHTML += '\n\n' + params.map(x => JSON.stringify(x)).join(' \\\\ ');
 	console.log.apply(console, params);
 }
+
+function addRemoteTrack(peerConnection, stream) {
+	peerConnection.addEventListener('track', event => {
+		log('Got remote track:', event.streams[0]);
+		event.streams[0].getTracks().forEach(track => {
+			log('Add a track to the remoteStream:', track);
+			stream.addTrack(track);
+		});
+	});
+}
+
 
 init();
