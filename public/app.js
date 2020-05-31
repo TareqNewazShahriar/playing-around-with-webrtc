@@ -15,21 +15,23 @@ const configuration = {
 	]
 };
 
+let logPanel = null;
+
 function init() {
 	document.querySelector('#cameraBtn').addEventListener('click', openUserMedia);
 	document.querySelector('#hangupBtn').addEventListener('click', hangUp);
 	document.querySelector('#createBtn').addEventListener('click', createCallId);
 	document.querySelector('#joinBtn').addEventListener('click', joinCall);
 	logPanel = document.getElementById('log');
-	ringtone = document.getElementById('ringtone');
-
+	
 	log('ice configuration', configuration);
 
 	window.connectionKey = `Connection${new Date().getTime()}`;
 	widnow[window.connectionKey] = { configuration };
 }
 
-async function openUserMedia(e, remoteStream) {
+
+async function openUserMedia(e) {
 	let localStream;
 	try {
 		localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
@@ -50,6 +52,42 @@ async function openUserMedia(e, remoteStream) {
 	document.querySelector('#joinBtn').disabled = false;
 	document.querySelector('#createBtn').disabled = false;
 	document.querySelector('#hangupBtn').disabled = false;
+}
+
+function initializePeerConnection(remoteStream, ringtone) {
+	let peerConnection = new RTCPeerConnection(configuration);
+	log('Create PeerConnection with configuration: ', configuration);
+
+	peerConnection.addEventListener('icegatheringstatechange', e =>
+		log(`ICE gathering state changed: ${peerConnection.iceGatheringState}`, e)
+	);
+
+	peerConnection.addEventListener('connectionstatechange', e => {
+		log(`Connection state change: ${peerConnection.connectionState}`, e)
+
+		// if rigntone available, play it
+		if (ringtone && peerConnection.connectionState === 'connected') {
+			ringtone.play();
+			let ans = document.getElementById('ans');
+			ans.onclick = function () {
+				ringtone.pause();
+				ringtone.currentTime = 0;
+				document.querySelector('#remoteVideo').srcObject = remoteStream;
+				ans.style.display = 'none';
+			}
+			ans.style.display = 'block';
+		}
+	});
+
+	peerConnection.addEventListener('signalingstatechange', e =>
+		log(`Signaling state change: ${peerConnection.signalingState}`, e)
+	);
+
+	peerConnection.addEventListener('iceconnectionstatechange ', e =>
+		log(`ICE connection state change: ${peerConnection.iceConnectionState}`, e)
+	);
+
+	return peerConnection;
 }
 
 function initRemoteStream(peerConnection, remoteStream) {
@@ -133,41 +171,6 @@ async function hangUp(e, remoteStream) {
 	}
 
 	// document.location.reload(true);
-}
-
-function initializePeerConnection() {
-	let peerConnection = new RTCPeerConnection(configuration);
-	log('Create PeerConnection with configuration: ', configuration);
-
-	peerConnection.addEventListener('icegatheringstatechange', e =>
-		log(`ICE gathering state changed: ${peerConnection.iceGatheringState}`, e)
-	);
-
-	peerConnection.addEventListener('connectionstatechange', e => {
-		log(`Connection state change: ${peerConnection.connectionState}`, e)
-
-		if (isCaller && peerConnection.connectionState === 'connected') {
-			ringtone.play();
-			let ans = document.getElementById('ans');
-			ans.onclick = function () {
-				ringtone.pause();
-				ringtone.currentTime = 0;
-				document.querySelector('#remoteVideo').srcObject = remoteStream;
-				ans.style.display = 'none';
-			}
-			ans.style.display = 'block';
-		}
-	});
-
-	peerConnection.addEventListener('signalingstatechange', e =>
-		log(`Signaling state change: ${peerConnection.signalingState}`, e)
-	);
-
-	peerConnection.addEventListener('iceconnectionstatechange ', e =>
-		log(`ICE connection state change: ${peerConnection.iceConnectionState}`, e)
-	);
-
-	return peerConnection;
 }
 
 function log(...params) {

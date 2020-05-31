@@ -1,11 +1,6 @@
 let peerConnection = null;
 let localStream = null;
 let remoteStream = null;
-let remoteStreamList = [];
-let callId = null;
-let logPanel = null;
-let ringtone = null;
-let isCaller = null;
 let dataChannel = null;
 let dataChannelOpened = false;
 
@@ -19,8 +14,7 @@ function joinCall() {
 
 async function joinCallById(callId) {
 	isCaller = false;
-	document.querySelector('#remoteVideo').srcObject = remoteStream;
-
+	
 	// Get call data by id from db
 	const db = firebase.firestore();
 	const callRef = db.collection('calls').doc(callId);
@@ -32,11 +26,12 @@ async function joinCallById(callId) {
 		return;
 	}
 
-	peerConnection = initializePeerConnection();
+	peerConnection = initializePeerConnection(remoteStream);
 
 	gatherLocalIceCandidates(peerConnection, callRef, 'calleeCandidates');
 	
 	initRemoteStream(peerConnection, remoteStream);
+	document.querySelector('#remoteVideo').srcObject = remoteStream;
 
 	createAnswer(peerConnection, callRef, callSnapshot);
 	

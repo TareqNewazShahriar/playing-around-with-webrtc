@@ -1,11 +1,6 @@
 let peerConnection = null;
-let localStream = null;
 let remoteStream = null;
 let remoteStreamList = [];
-let callId = null;
-let logPanel = null;
-let ringtone = null;
-let isCaller = null;
 let dataChannel = null;
 let dataChannelOpened = false;
 
@@ -15,7 +10,8 @@ async function createCallId() {
 	document.querySelector('#createBtn').disabled = true;
 	document.querySelector('#joinBtn').disabled = true;
 
-	peerConnection = initializePeerConnection();
+	peerConnection = initializePeerConnection(remoteStream,
+		document.getElementById('ringtone'));
 
 	// Access calls db entity
 	const db = firebase.firestore();
