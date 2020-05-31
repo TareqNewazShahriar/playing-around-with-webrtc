@@ -5,7 +5,7 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>WebRTC (STUN Only)</title>
-	
+
 	<!-- update the version number as needed -->
 	<script defer src="firebase/firebase-app.js"></script>
 	<!-- include only the Firebase features as you need -->
@@ -26,7 +26,7 @@
 		<button onclick="window.location.reload(true)">Reload</button>
 	</div>
 	<div id="created-id" style="display: none;">
-		You're the caller. Call ID: <input id="createdRoomId" type="text" readonly onfocus="this.select()" />
+		You're the caller. Call ID: <input id="createdCallId" type="text" readonly onfocus="this.select()" />
 	</div>
 	<div id="videos">
 		<video id="localVideo" autoplay playsinline></video>
@@ -38,11 +38,17 @@
 		LOG
 		<pre id="log"></pre>
 	</div>
-	
+
 	<script>
-		let script = document.createElement('script');
-		script.src = `app.js?v=${new Date().getTime()}`
-		document.body.appendChild(script);
+		function createScript(fileName) {
+			let script = document.createElement('script');
+			script.src = `${fileName}?v=${new Date().getTime()}`
+			document.body.appendChild(script);
+		}
+
+		createScript('callIdCreatorPeer.js');
+		createScript('callIdUserPeer.js');
+		createScript('app.js');
 	</script>
 </body>
 
