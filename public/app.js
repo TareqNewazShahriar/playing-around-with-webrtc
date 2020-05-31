@@ -6,10 +6,11 @@ const configuration = {
 		// 		'stun:stun2.l.google.com:19302',
 		// 	]
 		// }
+		{ "url": "stun:ec2-54-176-1-181.us-west-1.compute.amazonaws.com:3478" },
 		{
-			url: 'turn:turn.bistri.com:80',
-			credential: 'homeo',
-			username: 'homeo'
+			"url": "turn:ec2-54-176-1-181.us-west-1.compute.amazonaws.com:3478",
+			"username": "tadhackuser",
+			"credential": "tadhackpw"
 		}
 	],
 	iceCandidatePoolSize: 10,
@@ -124,7 +125,7 @@ function joinRoom() {
 async function joinRoomById(roomId) {
 	isCaller = false;
 	document.querySelector('#remoteVideo').srcObject = remoteStream;
-	
+
 	const db = firebase.firestore();
 	const roomRef = db.collection('rooms').doc(roomId);
 	const roomSnapshot = await roomRef.get();
@@ -215,7 +216,7 @@ async function openUserMedia(e) {
 	document.querySelector('#localVideo').srcObject = stream;
 	localStream = stream;
 	remoteStream = new MediaStream();
-	
+
 	log('Stream:', document.querySelector('#localVideo').srcObject);
 	document.querySelector('#cameraBtn').disabled = true;
 	document.querySelector('#joinBtn').disabled = false;
