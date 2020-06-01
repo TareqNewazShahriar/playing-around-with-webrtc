@@ -17,8 +17,7 @@ export default class CallIdUserPeer {
 		document.querySelector('#createBtn').disabled = true;
 		document.querySelector('#joinBtn').disabled = true;
 		document.querySelector('#hangupBtn').disabled = false;
-		document.querySelector('#hangupBtn').addEventListener('click', e => this.helper.hangUp(e, this.peerConnection, this.remoteStream));
-
+		
 		await this.joinCallById(e, prompt("Enter Call ID"));
 	}
 
@@ -35,19 +34,15 @@ export default class CallIdUserPeer {
 		}
 		
 		this.localStream = await this.helper.openUserMedia(e);
-		
 		this.peerConnection = this.helper.initializePeerConnection();
-
 		this.helper.addTracksToLocalStream(this.peerConnection, this.localStream);
-		
 		this.helper.gatherLocalIceCandidates(this.peerConnection, callRef, 'calleeCandidates');
-
 		this.remoteStream  = this.helper.initRemoteStream(this.peerConnection);
-		document.querySelector('#remoteVideo').srcObject = this.remoteStream;
-
 		this.createAnswer(this.peerConnection, callRef, callSnapshot);
-
 		await this.helper.gatherRemoteIceCandidates(this.peerConnection, callRef, 'callerCandidates');
+
+		document.querySelector('#remoteVideo').srcObject = this.remoteStream;
+		document.querySelector('#hangupBtn').addEventListener('click', e => this.helper.hangUp(e, this.peerConnection, this.remoteStream, callId));
 	}
 
 	async createAnswer(peerConnection, callRef, callSnapshot) {

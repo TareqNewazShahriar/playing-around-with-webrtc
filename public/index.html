@@ -38,7 +38,7 @@
 		<pre id="log"></pre>
 	</div>
 
-	<script type=module>
+	<script>
 		var logPanel = document.getElementById('log');
 		window.log = function(...params) {
 			logPanel.innerHTML += '\n\n' + params.map(x => JSON.stringify(x)).join(' \\\\ ');

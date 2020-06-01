@@ -39,8 +39,6 @@ export default class Helper {
 
 	initializePeerConnection() {
 		let peerConnection = new RTCPeerConnection(this.configuration);
-		
-
 		log('Create PeerConnection with configuration: ', this.configuration);
 
 		peerConnection.addEventListener('icegatheringstatechange', e =>
@@ -121,7 +119,7 @@ export default class Helper {
 		/// -------
 	}
 
-	async hangUp(e, peerConnection, remoteStream) {
+	async hangUp(e, peerConnection, remoteStream, callId) {
 		const tracks = document.querySelector('#localVideo').srcObject.getTracks();
 		tracks.forEach(track => {
 			track.stop();
@@ -142,19 +140,19 @@ export default class Helper {
 		document.querySelector('#hangupBtn').disabled = true;
 		document.querySelector('#created-id').style.display = 'none';
 
-		// Delete room on hangup
-		if (roomId) {
+		// Delete call on hangup
+		if (callId) {
 			const db = firebase.firestore();
-			const roomRef = db.collection('rooms').doc(roomId);
-			const calleeCandidates = await roomRef.collection('calleeCandidates').get();
+			const callRef = db.collection('calls').doc(callId);
+			const calleeCandidates = await callRef.collection('calleeCandidates').get();
 			calleeCandidates.forEach(async candidate => {
 				await candidate.ref.delete();
 			});
-			const callerCandidates = await roomRef.collection('callerCandidates').get();
+			const callerCandidates = await callRef.collection('callerCandidates').get();
 			callerCandidates.forEach(async candidate => {
 				await candidate.ref.delete();
 			});
-			await roomRef.delete();
+			await callRef.delete();
 		}
 
 		// document.location.reload(true);

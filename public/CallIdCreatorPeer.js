@@ -17,29 +17,22 @@ export default class CallIdCreatorPeer {
 		document.querySelector('#createBtn').disabled = true;
 		document.querySelector('#joinBtn').disabled = true;
 		document.querySelector('#hangupBtn').disabled = false;
-		document.querySelector('#hangupBtn').addEventListener('click', e => this.helper.hangUp(e, this.peerConnection, this.remoteStream));
-
-		this.localStream = await this.helper.openUserMedia(e);
-
-		this.peerConnection = this.helper.initializePeerConnection();
 		
-		this.helper.addTracksToLocalStream(this.peerConnection, this.localStream);
-
 		// Access calls db entity
 		const db = firebase.firestore();
 		const callRef = await db.collection('calls').doc();
 
+		this.localStream = await this.helper.openUserMedia(e);
+		this.peerConnection = this.helper.initializePeerConnection();
+		this.helper.addTracksToLocalStream(this.peerConnection, this.localStream);
 		this.helper.gatherLocalIceCandidates(this.peerConnection, callRef, 'callerCandidates');
-
 		this.createOffer(this.peerConnection, callRef);
-
 		this.helper.initRemoteStream(this.peerConnection, this.remoteStream);
-
 		this.listeningForAnswerSdp(this.peerConnection, callRef);
-
 		await this.helper.gatherRemoteIceCandidates(this.peerConnection, callRef, 'calleeCandidates');
-
 		this.ringWhenConnected(this.peerConnection, this.remoteStream);
+
+		document.querySelector('#hangupBtn').addEventListener('click', e => this.helper.hangUp(e, this.peerConnection, this.remoteStream, callRef.id));
 	}
 
 	async createOffer(peerConnection, callRef) {
