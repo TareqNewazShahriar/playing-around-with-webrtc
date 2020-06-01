@@ -19,9 +19,8 @@
 <body>
 	<h1>WebRTC (STUN Only)</h1>
 	<div id="buttons">
-		<button id="cameraBtn">Start camera & microphone</button>
-		<button disabled id="createBtn">Create Call ID</button>
-		<button disabled id="joinBtn">Join The Call</button>
+		<button id="createBtn">Create Call ID</button>
+		<button id="joinBtn">Join The Call</button>
 		<button disabled id="hangupBtn">Hangup</button>
 		<button onclick="window.location.reload(true)">Reload</button>
 	</div>
@@ -39,16 +38,25 @@
 		<pre id="log"></pre>
 	</div>
 
-	<script>
+	<script type=module>
+		var logPanel = document.getElementById('log');
+		window.log = function(...params) {
+			logPanel.innerHTML += '\n\n' + params.map(x => JSON.stringify(x)).join(' \\\\ ');
+			console.log.apply(console, params);
+		}
+
 		function createScript(fileName) {
 			let script = document.createElement('script');
 			script.src = `${fileName}?v=${new Date().getTime()}`
+			script.type = 'module';
 			document.body.appendChild(script);
 		}
 
-		createScript('callIdCreatorPeer.js');
-		createScript('callIdUserPeer.js');
+		// createScript('callIdCreatorPeer.js');
+		// createScript('callIdUserPeer.js');
+		// createScript('helper.js');
 		createScript('app.js');
+
 	</script>
 </body>
 

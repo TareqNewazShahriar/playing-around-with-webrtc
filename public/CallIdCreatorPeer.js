@@ -1,74 +1,106 @@
-let peerConnection = null;
-let remoteStream = null;
-let remoteStreamList = [];
-let dataChannel = null;
-let dataChannelOpened = false;
+import Helper from './helper.js';
 
+export default class CallIdCreatorPeer {
+	peerConnection = null;
+	localStream = null;
+	remoteStream = null;
+	remoteStreamList = [];
+	dataChannel = null;
+	dataChannelOpened = false;
+	helper = null;
 
-async function createCallId() {
-	isCaller = true;
-	document.querySelector('#createBtn').disabled = true;
-	document.querySelector('#joinBtn').disabled = true;
+	constructor() {
+		this.helper = new Helper();
+	}
 
-	peerConnection = initializePeerConnection(remoteStream,
-		document.getElementById('ringtone'));
+	async createCallId(e) {
+		document.querySelector('#createBtn').disabled = true;
+		document.querySelector('#joinBtn').disabled = true;
+		document.querySelector('#hangupBtn').disabled = false;
+		document.querySelector('#hangupBtn').addEventListener('click', e => this.helper.hangUp(e, this.peerConnection, this.remoteStream));
 
-	// Access calls db entity
-	const db = firebase.firestore();
-	const callRef = await db.collection('calls').doc();
+		this.localStream = await this.helper.openUserMedia(e);
 
-	gatherLocalIceCandidates(peerConnection, callRef, 'callerCandidates');
+		this.peerConnection = this.helper.initializePeerConnection();
+		
+		this.helper.addTracksToLocalStream(this.peerConnection, this.localStream);
 
-	createOffer(peerConnection, callRef);
+		// Access calls db entity
+		const db = firebase.firestore();
+		const callRef = await db.collection('calls').doc();
 
-	initRemoteStream(peerConnection, remoteStream);
+		this.helper.gatherLocalIceCandidates(this.peerConnection, callRef, 'callerCandidates');
 
-	listeningForAnswerSdp(peerConnection, callRef);
+		this.createOffer(this.peerConnection, callRef);
 
-	gatherRemoteIceCandidates(peerConnection, callRef);
-}
+		this.helper.initRemoteStream(this.peerConnection, this.remoteStream);
 
-async function createOffer(peerConnection, callRef) {
-	const offer = await peerConnection.createOffer();
-	await peerConnection.setLocalDescription(offer);
-	log('Created offer:', offer);
+		this.listeningForAnswerSdp(this.peerConnection, callRef);
 
-	const callWithOffer = {
-		'offer': {
-			type: offer.type,
-			sdp: offer.sdp,
-		},
-	};
-	await callRef.set(callWithOffer);
-	callId = callRef.id;
-	log(`New call created with SDP offer. Call ID: ${callRef.id}`);
-	document.getElementById('createdCallId').value = callRef.id;
-	document.getElementById('created-id').style.display = 'block';
-}
+		await this.helper.gatherRemoteIceCandidates(this.peerConnection, callRef, 'calleeCandidates');
 
-async function listeningForAnswerSdp(peerConnection, callRef) {
-	callRef.onSnapshot(async snapshot => {
-		const data = snapshot.data();
-		if (!peerConnection.currentRemoteDescription && data && data.answer) {
-			log('Got remote description: ', data.answer);
-			const rtcSessionDescription = new RTCSessionDescription(data.answer);
-			await peerConnection.setRemoteDescription(rtcSessionDescription);
-		}
-	});
-}
+		this.ringWhenConnected(this.peerConnection, this.remoteStream);
+	}
 
-function initDataChannel() {
-	dataChannel = peerConnection.createDataChannel("anyName");
-	dataChannel.addEventListener('open', event => {
-		dataChannelOpened = true;
-		log('data channel opened.', event);
+	async createOffer(peerConnection, callRef) {
+		const offer = await peerConnection.createOffer();
+		await peerConnection.setLocalDescription(offer);
+		log('Created offer:', offer);
 
-		dataChannel.send({ name: 'ok', msg: 'hey' });
-	})
-	dataChannel.addEventListener('close', event => {
-		log('data channel closed.', event);
-	});
-	dataChannel.addEventListener('message', event => {
-		log('data channel message', event.data);
-	});
+		const callWithOffer = {
+			'offer': {
+				type: offer.type,
+				sdp: offer.sdp,
+			},
+		};
+		await callRef.set(callWithOffer);
+		log(`New call created with SDP offer. Call ID: ${callRef.id}`);
+		document.getElementById('createdCallId').value = callRef.id;
+		document.getElementById('created-id').style.display = 'block';
+	}
+
+	async listeningForAnswerSdp(peerConnection, callRef) {
+		callRef.onSnapshot(async snapshot => {
+			const data = snapshot.data();
+			if (!peerConnection.currentRemoteDescription && data && data.answer) {
+				log('Got remote description: ', data.answer);
+				const rtcSessionDescription = new RTCSessionDescription(data.answer);
+				await peerConnection.setRemoteDescription(rtcSessionDescription);
+			}
+		});
+	}
+
+	ringWhenConnected(peerConnection, remoteStream) {
+		let ringtone = document.getElementById('ringtone');
+		peerConnection.addEventListener('connectionstatechange', e => {
+			// if rigntone available, play it
+			if (ringtone && peerConnection.connectionState === 'connected') {
+				ringtone.play();
+				let ans = document.getElementById('ans');
+				ans.onclick = function () {
+					ringtone.pause();
+					ringtone.currentTime = 0;
+					document.querySelector('#remoteVideo').srcObject = remoteStream;
+					ans.style.display = 'none';
+				}
+				ans.style.display = 'block';
+			}
+		});
+	}
+
+	initDataChannel() {
+		dataChannel = this.peerConnection.createDataChannel("anyName");
+		dataChannel.addEventListener('open', event => {
+			dataChannelOpened = true;
+			log('data channel opened.', event);
+
+			dataChannel.send({ name: 'ok', msg: 'hey' });
+		})
+		dataChannel.addEventListener('close', event => {
+			log('data channel closed.', event);
+		});
+		dataChannel.addEventListener('message', event => {
+			log('data channel message', event.data);
+		});
+	}
 }

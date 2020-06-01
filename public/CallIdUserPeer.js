@@ -1,76 +1,87 @@
-let peerConnection = null;
-let localStream = null;
-let remoteStream = null;
-let dataChannel = null;
-let dataChannelOpened = false;
+import Helper from './helper.js';
 
+export default class CallIdUserPeer {
 
-function joinCall() {
-	document.querySelector('#createBtn').disabled = true;
-	document.querySelector('#joinBtn').disabled = true;
+	peerConnection = null;
+	localStream = null;
+	remoteStream = null;
+	dataChannel = null;
+	dataChannelOpened = false;
+	helper = null;
 
-	joinCallById(prompt("Enter Call ID"));
-}
-
-async function joinCallById(callId) {
-	isCaller = false;
-	
-	// Get call data by id from db
-	const db = firebase.firestore();
-	const callRef = db.collection('calls').doc(callId);
-	const callSnapshot = await callRef.get();
-	log('Got call record:', callSnapshot.exists);
-
-	if (!callSnapshot.exists) {
-		alert('Call ID not found');
-		return;
+	constructor() {
+		this.helper = new Helper();
 	}
 
-	peerConnection = initializePeerConnection(remoteStream);
+	async joinCall(e) {
+		document.querySelector('#createBtn').disabled = true;
+		document.querySelector('#joinBtn').disabled = true;
+		document.querySelector('#hangupBtn').disabled = false;
+		document.querySelector('#hangupBtn').addEventListener('click', e => this.helper.hangUp(e, this.peerConnection, this.remoteStream));
 
-	gatherLocalIceCandidates(peerConnection, callRef, 'calleeCandidates');
-	
-	initRemoteStream(peerConnection, remoteStream);
-	document.querySelector('#remoteVideo').srcObject = remoteStream;
+		await this.joinCallById(e, prompt("Enter Call ID"));
+	}
 
-	createAnswer(peerConnection, callRef, callSnapshot);
-	
-	gatherRemoteIceCandidates(peerConnection, callRef);
-	
-	initDataChannel(peerConnection);
-}
+	async joinCallById(e, callId) {
+		// Get call data by id from db
+		const db = firebase.firestore();
+		const callRef = db.collection('calls').doc(callId);
+		const callSnapshot = await callRef.get();
+		log('Got call record:', callSnapshot.exists);
 
-async function createAnswer(peerConnection, callRef, callSnapshot) {
-	const offer = callSnapshot.data().offer;
-	log('Got offer:', offer);
-	await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-	const answer = await peerConnection.createAnswer();
-	log('Created answer:', answer);
-	await peerConnection.setLocalDescription(answer);
+		if (!callSnapshot.exists) {
+			alert('Call ID not found');
+			return;
+		}
+		
+		this.localStream = await this.helper.openUserMedia(e);
+		
+		this.peerConnection = this.helper.initializePeerConnection();
 
-	const callWithAnswer = {
-		answer: {
-			type: answer.type,
-			sdp: answer.sdp,
-		},
-	};
-	await callRef.update(callWithAnswer);
-}
+		this.helper.addTracksToLocalStream(this.peerConnection, this.localStream);
+		
+		this.helper.gatherLocalIceCandidates(this.peerConnection, callRef, 'calleeCandidates');
 
-function initDataChannel(peerConnection) {
-	peerConnection.addEventListener('datachannel', event => {
-		dataChannel = event.channel;
-		log('data channel received.', event);
+		this.remoteStream  = this.helper.initRemoteStream(this.peerConnection);
+		document.querySelector('#remoteVideo').srcObject = this.remoteStream;
 
-		dataChannel.addEventListener('open', event => {
-			dataChannelOpened = true;
-			log('data channel opened.', event);
-		})
-		dataChannel.addEventListener('close', event => {
-			log('data channel closed.', event);
+		this.createAnswer(this.peerConnection, callRef, callSnapshot);
+
+		await this.helper.gatherRemoteIceCandidates(this.peerConnection, callRef, 'callerCandidates');
+	}
+
+	async createAnswer(peerConnection, callRef, callSnapshot) {
+		const offer = callSnapshot.data().offer;
+		log('Got offer:', offer);
+		await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+		const answer = await peerConnection.createAnswer();
+		log('Created answer:', answer);
+		await peerConnection.setLocalDescription(answer);
+
+		const callWithAnswer = {
+			answer: {
+				type: answer.type,
+				sdp: answer.sdp,
+			},
+		};
+		await callRef.update(callWithAnswer);
+	}
+
+	initDataChannel(peerConnection) {
+		peerConnection.addEventListener('datachannel', event => {
+			dataChannel = event.channel;
+			log('data channel received.', event);
+
+			dataChannel.addEventListener('open', event => {
+				dataChannelOpened = true;
+				log('data channel opened.', event);
+			})
+			dataChannel.addEventListener('close', event => {
+				log('data channel closed.', event);
+			});
+			dataChannel.addEventListener('message', event => {
+				log('data channel message', event.data);
+			});
 		});
-		dataChannel.addEventListener('message', event => {
-			log('data channel message', event.data);
-		});
-	});
+	}
 }
