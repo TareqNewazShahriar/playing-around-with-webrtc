@@ -18,9 +18,7 @@ export default class CallIdCreatorPeer {
 		document.querySelector('#joinBtn').disabled = true;
 		document.querySelector('#hangupBtn').disabled = false;
 		
-		// Access calls db entity
-		const db = firebase.firestore();
-		const callRef = await db.collection('calls').doc();
+		let callRef = await this.helper.getDbEntityReference("calls");
 
 		this.localStream = await this.helper.openUserMedia(e);
 		this.peerConnection = this.helper.initializePeerConnection();
@@ -32,10 +30,10 @@ export default class CallIdCreatorPeer {
 		await this.helper.gatherRemoteIceCandidates(this.peerConnection, callRef, 'calleeCandidates');
 		this.ringWhenConnected(this.peerConnection, this.remoteStream);
 
-		document.querySelector('#hangupBtn').addEventListener('click', e => this.helper.hangUp(e, this.peerConnection, this.remoteStream, callRef.id));
+		document.querySelector('#hangupBtn').addEventListener('click', e => this.helper.hangUp(e, this.peerConnection, this.remoteStream, "calls", callRef.id));
 	}
 
-	async createOffer(peerConnection, callRef) {
+	async createOffer(peerConnection, entityRef) {
 		const offer = await peerConnection.createOffer();
 		await peerConnection.setLocalDescription(offer);
 		log('Created offer:', offer);
@@ -46,14 +44,14 @@ export default class CallIdCreatorPeer {
 				sdp: offer.sdp,
 			},
 		};
-		await callRef.set(callWithOffer);
-		log(`New call created with SDP offer. Call ID: ${callRef.id}`);
-		document.getElementById('createdCallId').value = callRef.id;
+		await entityRef.set(callWithOffer);
+		log(`New entity created with SDP offer. entity ID: ${entityRef.id}`);
+		document.getElementById('createdCallId').value = entityRef.id;
 		document.getElementById('created-id').style.display = 'block';
 	}
 
-	async listeningForAnswerSdp(peerConnection, callRef) {
-		callRef.onSnapshot(async snapshot => {
+	async listeningForAnswerSdp(peerConnection, entityRef) {
+		entityRef.onSnapshot(async snapshot => {
 			const data = snapshot.data();
 			if (!peerConnection.currentRemoteDescription && data && data.answer) {
 				log('Got remote description: ', data.answer);
@@ -82,6 +80,10 @@ export default class CallIdCreatorPeer {
 	}
 
 	initDataChannel() {
+		let peerConnection = this.helper.initializePeerConnection();
+		let dcRef = this.helper.getDbEntityReference("dc");
+		this.createOffer(peerConnection, dcRef);
+
 		dataChannel = this.peerConnection.createDataChannel("anyName");
 		dataChannel.addEventListener('open', event => {
 			dataChannelOpened = true;

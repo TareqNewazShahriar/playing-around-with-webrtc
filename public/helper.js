@@ -60,6 +60,14 @@ export default class Helper {
 		return peerConnection;
 	}
 
+	async getDbEntityReference(entityName, id) {
+		const db = firebase.firestore();
+		const entity = await db.collection(entityName)
+		const entityRef = id ? entity.doc(id) : entity.doc();
+		return entityRef;
+	}
+
+
 	addTracksToLocalStream(peerConnection, localStream) {
 		document.querySelector('#localVideo').srcObject = localStream;
 		localStream.getTracks().forEach(track => {
@@ -80,8 +88,8 @@ export default class Helper {
 		return remoteStream;
 	}
 
-	gatherLocalIceCandidates(peerConnection, callRef, collectionName) {
-		const callerCandidatesCollection = callRef.collection(collectionName);
+	gatherLocalIceCandidates(peerConnection, entityRef, collectionName) {
+		const callerCandidatesCollection = entityRef.collection(collectionName);
 		peerConnection.addEventListener('icecandidate', event => {
 			if (!event.candidate) {
 				// After collecting all candidates, event will be fired once again with a null
@@ -92,8 +100,8 @@ export default class Helper {
 		});
 	}
 
-	async gatherRemoteIceCandidates(peerConnection, callRef, remoteCollectionName) {
-		callRef.collection(remoteCollectionName).onSnapshot(snapshot => {
+	async gatherRemoteIceCandidates(peerConnection, entityRef, remoteCollectionName) {
+		entityRef.collection(remoteCollectionName).onSnapshot(snapshot => {
 			snapshot.docChanges().forEach(async change => {
 				if (change.type === 'added') {
 					let data = change.doc.data();
@@ -119,7 +127,7 @@ export default class Helper {
 		/// -------
 	}
 
-	async hangUp(e, peerConnection, remoteStream, callId) {
+	async hangUp(e, peerConnection, remoteStream, entityName, entityId) {
 		const tracks = document.querySelector('#localVideo').srcObject.getTracks();
 		tracks.forEach(track => {
 			track.stop();
@@ -141,18 +149,18 @@ export default class Helper {
 		document.querySelector('#created-id').style.display = 'none';
 
 		// Delete call on hangup
-		if (callId) {
+		if (entityId) {
 			const db = firebase.firestore();
-			const callRef = db.collection('calls').doc(callId);
-			const calleeCandidates = await callRef.collection('calleeCandidates').get();
+			const entityRef = db.collection(entityName).doc(entityId);
+			const calleeCandidates = await entityRef.collection('calleeCandidates').get();
 			calleeCandidates.forEach(async candidate => {
 				await candidate.ref.delete();
 			});
-			const callerCandidates = await callRef.collection('callerCandidates').get();
+			const callerCandidates = await entityRef.collection('callerCandidates').get();
 			callerCandidates.forEach(async candidate => {
 				await candidate.ref.delete();
 			});
-			await callRef.delete();
+			await entityRef.delete();
 		}
 
 		// document.location.reload(true);

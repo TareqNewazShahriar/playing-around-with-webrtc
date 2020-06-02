@@ -22,9 +22,7 @@ export default class CallIdUserPeer {
 	}
 
 	async joinCallById(e, callId) {
-		// Get call data by id from db
-		const db = firebase.firestore();
-		const callRef = db.collection('calls').doc(callId);
+		let callRef = await this.helper.getDbEntityReference("calls", callId);
 		const callSnapshot = await callRef.get();
 		log('Got call record:', callSnapshot.exists);
 
@@ -42,7 +40,7 @@ export default class CallIdUserPeer {
 		await this.helper.gatherRemoteIceCandidates(this.peerConnection, callRef, 'callerCandidates');
 
 		document.querySelector('#remoteVideo').srcObject = this.remoteStream;
-		document.querySelector('#hangupBtn').addEventListener('click', e => this.helper.hangUp(e, this.peerConnection, this.remoteStream, callId));
+		document.querySelector('#hangupBtn').addEventListener('click', e => this.helper.hangUp(e, this.peerConnection, this.remoteStream, "calls", callId));
 	}
 
 	async createAnswer(peerConnection, callRef, callSnapshot) {
