@@ -27,7 +27,7 @@ export default class CallIdCreatorPeer {
 		this.helper.addTracksToLocalStream(this.peerConnection, this.localStream);
 		this.helper.gatherLocalIceCandidates(this.peerConnection, callRef, 'callerCandidates');
 		this.createOffer(this.peerConnection, callRef);
-		this.helper.initRemoteStream(this.peerConnection, this.remoteStream);
+		this.remoteStream = this.helper.initRemoteStream(this.peerConnection);
 		this.listeningForAnswerSdp(this.peerConnection, callRef);
 		await this.helper.gatherRemoteIceCandidates(this.peerConnection, callRef, 'calleeCandidates');
 		this.ringWhenConnected(this.peerConnection, this.remoteStream);
