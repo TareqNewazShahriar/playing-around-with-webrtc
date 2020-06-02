@@ -27,6 +27,17 @@
 	<div id="created-id" style="display: none;">
 		You're the caller. Call ID: <input id="createdCallId" type="text" readonly onfocus="this.select()" />
 	</div>
+
+	<div>
+		<div>
+			<button id="createDcBtn">Create Data Channel ID</button>
+			<button id="joinDcBtn">Join Data Channel</button>
+		</div>
+		<div id="dc-pannel">
+			Data Channel ID <input id="dcId" type="text" readonly onfocus="this.select()" />
+		</div>
+	</div>
+
 	<div id="videos">
 		<video id="localVideo" autoplay playsinline></video>
 		<video id="remoteVideo" autoplay playsinline></video>

@@ -3,8 +3,14 @@ import CallIdUserPeer from './callIdUserPeer.js';
 
 class App {
 	constructor() {
-		document.querySelector('#createBtn').addEventListener('click', e => new CallIdCreatorPeer().createCallId(e));
-		document.querySelector('#joinBtn').addEventListener('click',e => new CallIdUserPeer().joinCall(e));
+		let idCreator = new CallIdCreatorPeer();
+		let idUser = new CallIdUserPeer();
+
+		document.querySelector('#createBtn').addEventListener('click', e => idCreator.createCallId(e));
+		document.querySelector('#joinBtn').addEventListener('click',e => idUser.joinCall(e));
+
+		document.querySelector('#createDcBtn').addEventListener('click', e => idCreator.initDataChannel(e));
+		document.querySelector('#joinDcBtn').addEventListener('click',e => idUser.initDataChannel(e));
 	}
 }
 

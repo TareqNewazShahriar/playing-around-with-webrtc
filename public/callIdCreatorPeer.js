@@ -1,13 +1,16 @@
 import Helper from './helper.js';
 
 export default class CallIdCreatorPeer {
+	helper = null;
+
 	peerConnection = null;
 	localStream = null;
 	remoteStream = null;
 	remoteStreamList = [];
+	
+	dcPeerConnection = null;
 	dataChannel = null;
 	dataChannelOpened = false;
-	helper = null;
 
 	constructor() {
 		this.helper = new Helper();
@@ -19,14 +22,17 @@ export default class CallIdCreatorPeer {
 		document.querySelector('#hangupBtn').disabled = false;
 		
 		let callRef = await this.helper.getDbEntityReference("calls");
-
 		this.localStream = await this.helper.openUserMedia(e);
 		this.peerConnection = this.helper.initializePeerConnection();
 		this.helper.addTracksToLocalStream(this.peerConnection, this.localStream);
 		this.helper.gatherLocalIceCandidates(this.peerConnection, callRef, 'callerCandidates');
-		this.createOffer(this.peerConnection, callRef);
+		
+		await this.createOffer(this.peerConnection, callRef);
+		document.getElementById('createdCallId').value = entityRef.id;
+		document.getElementById('created-id').style.display = 'block';
+
 		this.remoteStream = this.helper.initRemoteStream(this.peerConnection);
-		this.listeningForAnswerSdp(this.peerConnection, callRef);
+		await this.listeningForAnswerSdp(this.peerConnection, callRef);
 		await this.helper.gatherRemoteIceCandidates(this.peerConnection, callRef, 'calleeCandidates');
 		this.ringWhenConnected(this.peerConnection, this.remoteStream);
 
@@ -46,8 +52,6 @@ export default class CallIdCreatorPeer {
 		};
 		await entityRef.set(callWithOffer);
 		log(`New entity created with SDP offer. entity ID: ${entityRef.id}`);
-		document.getElementById('createdCallId').value = entityRef.id;
-		document.getElementById('created-id').style.display = 'block';
 	}
 
 	async listeningForAnswerSdp(peerConnection, entityRef) {
@@ -79,17 +83,26 @@ export default class CallIdCreatorPeer {
 		});
 	}
 
-	initDataChannel() {
-		let peerConnection = this.helper.initializePeerConnection();
-		let dcRef = this.helper.getDbEntityReference("dc");
-		this.createOffer(peerConnection, dcRef);
+	async initDataChannel() {
+		let dcRef = await this.helper.getDbEntityReference("dataChannels");
+		this.dcPeerConnection = this.helper.initializePeerConnection();
+		let dataChannel = this.dcPeerConnection.createDataChannel("anyName");
+		this.helper.gatherLocalIceCandidates(this.dcPeerConnection, dcRef, "callerCandidates");
+		
+		this.createOffer(this.dcPeerConnection, dcRef);
+		document.getElementById('dcId').value = dcRef.id;
+		document.getElementById('dc-pannel').style.display = 'block';
 
-		dataChannel = this.peerConnection.createDataChannel("anyName");
+		this.listeningForAnswerSdp(this.dcPeerConnection, dcRef);
+		await this.helper.gatherRemoteIceCandidates(this.dcPeerConnection, dcRef, "calleeCandidates");
+		// no data-clear for now
+
+		
 		dataChannel.addEventListener('open', event => {
-			dataChannelOpened = true;
+			this.dataChannelOpened = true;
 			log('data channel opened.', event);
 
-			dataChannel.send({ name: 'ok', msg: 'hey' });
+			dataChannel.send(JSON.stringify({ name: 'ok', msg: 'hey' }));
 		})
 		dataChannel.addEventListener('close', event => {
 			log('data channel closed.', event);

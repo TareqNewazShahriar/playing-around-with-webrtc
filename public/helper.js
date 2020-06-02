@@ -107,12 +107,12 @@ export default class Helper {
 					let data = change.doc.data();
 					log(`Got new remote ICE candidate:`, data);
 					await peerConnection.addIceCandidate(new RTCIceCandidate(data));
-						// .then(r => {
-						// 	log('peerConnection.addIceCandidate > then', r);
-						// })
-						// .catch(ex => {
-						// 	log('peerConnection.addIceCandidate > catch', ex);
-						// });
+					// .then(r => {
+					// 	log('peerConnection.addIceCandidate > then', r);
+					// })
+					// .catch(ex => {
+					// 	log('peerConnection.addIceCandidate > catch', ex);
+					// });
 				}
 			});
 		});
