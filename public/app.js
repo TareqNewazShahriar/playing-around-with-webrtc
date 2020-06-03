@@ -7,10 +7,18 @@ class App {
 		let idUser = new CallIdUserPeer();
 
 		document.querySelector('#createBtn').addEventListener('click', e => idCreator.createCallId(e));
-		document.querySelector('#joinBtn').addEventListener('click',e => idUser.joinCall(e));
+		document.querySelector('#joinBtn').addEventListener('click', e => idUser.joinCall(e));
 
 		document.querySelector('#createDcBtn').addEventListener('click', e => idCreator.initDataChannel(e));
-		document.querySelector('#joinDcBtn').addEventListener('click',e => idUser.initDataChannel(e));
+		document.querySelector('#joinDcBtn').addEventListener('click', e => idUser.initDataChannel(e));
+
+		document.querySelector('#file').addEventListener('change', e => {
+			log(e);
+			if (idCreator.dcPeerConnection)
+				idCreator.sendFile(e.target.files[0]);
+			else
+				idUser.sendFile(e.target.files[0]);
+		});
 	}
 }
 

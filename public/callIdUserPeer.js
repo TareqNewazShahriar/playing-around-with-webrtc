@@ -1,5 +1,7 @@
 import Helper from './helper.js';
 
+'use strict';
+
 export default class CallIdUserPeer {
 	helper = null;
 
@@ -10,7 +12,7 @@ export default class CallIdUserPeer {
 	dcPeerConnection = null;
 	dataChannel = null;
 	dataChannelOpened = false;
-	
+
 
 	constructor() {
 		this.helper = new Helper();
@@ -77,21 +79,20 @@ export default class CallIdUserPeer {
 		await this.createAnswer(this.dcPeerConnection, dcRef);
 		await this.helper.gatherRemoteIceCandidates(this.dcPeerConnection, dcRef, "callerCandidates");
 
-		let dataChannel = null;
 		this.dcPeerConnection.addEventListener('datachannel', event => {
-			dataChannel = event.channel;
+			this.dataChannel = event.channel;
 			log('data channel received.', event);
 
-			dataChannel.addEventListener('open', event => {
+			this.dataChannel.addEventListener('open', event => {
 				this.dataChannelOpened = true;
 				log('data channel opened.', event);
 			})
-			dataChannel.addEventListener('close', event => {
+			this.dataChannel.addEventListener('close', event => {
 				log('data channel closed.', event);
 			});
-			dataChannel.addEventListener('message', event => {
-				let data = JSON.parse(event.data);
-				log('data channel message', data);
+			this.dataChannel.addEventListener('message', event => {
+				log('data channel message:', event.data);
+				this.dataChannel.send("got it");
 			});
 		});
 	}

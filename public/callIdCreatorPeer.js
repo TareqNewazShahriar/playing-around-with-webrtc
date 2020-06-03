@@ -7,7 +7,7 @@ export default class CallIdCreatorPeer {
 	localStream = null;
 	remoteStream = null;
 	remoteStreamList = [];
-	
+
 	dcPeerConnection = null;
 	dataChannel = null;
 	dataChannelOpened = false;
@@ -20,15 +20,15 @@ export default class CallIdCreatorPeer {
 		document.querySelector('#createBtn').disabled = true;
 		document.querySelector('#joinBtn').disabled = true;
 		document.querySelector('#hangupBtn').disabled = false;
-		
+
 		let callRef = await this.helper.getDbEntityReference("calls");
 		this.localStream = await this.helper.openUserMedia(e);
 		this.peerConnection = this.helper.initializePeerConnection();
 		this.helper.addTracksToLocalStream(this.peerConnection, this.localStream);
 		this.helper.gatherLocalIceCandidates(this.peerConnection, callRef, 'callerCandidates');
-		
+
 		await this.createOffer(this.peerConnection, callRef);
-		document.getElementById('createdCallId').value = entityRef.id;
+		document.getElementById('createdCallId').value = callRef.id;
 		document.getElementById('created-id').style.display = 'block';
 
 		this.remoteStream = this.helper.initRemoteStream(this.peerConnection);
@@ -86,9 +86,9 @@ export default class CallIdCreatorPeer {
 	async initDataChannel() {
 		let dcRef = await this.helper.getDbEntityReference("dataChannels");
 		this.dcPeerConnection = this.helper.initializePeerConnection();
-		let dataChannel = this.dcPeerConnection.createDataChannel("anyName");
+		this.dataChannel = this.dcPeerConnection.createDataChannel("anyName");
 		this.helper.gatherLocalIceCandidates(this.dcPeerConnection, dcRef, "callerCandidates");
-		
+
 		this.createOffer(this.dcPeerConnection, dcRef);
 		document.getElementById('dcId').value = dcRef.id;
 		document.getElementById('dc-pannel').style.display = 'block';
@@ -97,18 +97,22 @@ export default class CallIdCreatorPeer {
 		await this.helper.gatherRemoteIceCandidates(this.dcPeerConnection, dcRef, "calleeCandidates");
 		// no data-clear for now
 
-		
-		dataChannel.addEventListener('open', event => {
+
+		this.dataChannel.addEventListener('open', event => {
 			this.dataChannelOpened = true;
 			log('data channel opened.', event);
 
-			dataChannel.send(JSON.stringify({ name: 'ok', msg: 'hey' }));
+			this.dataChannel.send(JSON.stringify({ name: 'ok', msg: 'hey' }));
 		})
-		dataChannel.addEventListener('close', event => {
+		this.dataChannel.addEventListener('close', event => {
 			log('data channel closed.', event);
 		});
-		dataChannel.addEventListener('message', event => {
-			log('data channel message', event.data);
+		this.dataChannel.addEventListener('message', event => {
+			log('data channel message:', event.data);
 		});
+	}
+
+	async sendFile(blob) {
+		this.dataChannel.send(new FileReader().readAsArrayBuffer(blob));
 	}
 }
