@@ -16,8 +16,6 @@ class App {
 			log(e);
 			if (idCreator.dcPeerConnection)
 				idCreator.sendFile(e.target.files[0]);
-			else
-				idUser.sendFile(e.target.files[0]);
 		});
 	}
 }

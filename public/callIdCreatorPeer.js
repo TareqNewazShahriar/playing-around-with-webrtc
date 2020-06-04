@@ -1,4 +1,4 @@
-import Helper from './helper.js';
+import WebRtcHelper from './webRtcHelper.js';
 
 export default class CallIdCreatorPeer {
 	helper = null;
@@ -13,7 +13,7 @@ export default class CallIdCreatorPeer {
 	dataChannelOpened = false;
 
 	constructor() {
-		this.helper = new Helper();
+		this.helper = new WebRtcHelper();
 	}
 
 	async createCallId(e) {
@@ -112,7 +112,12 @@ export default class CallIdCreatorPeer {
 		});
 	}
 
-	async sendFile(blob) {
-		this.dataChannel.send(new FileReader().readAsArrayBuffer(blob));
+	sendFile(file) {
+		let sliced = file.slice(0, file.size);
+		let reader = new FileReader();
+		reader.addEventListener('load', e => {
+			this.dataChannel.send(e.target.result);
+		});
+		reader.readAsArrayBuffer(sliced);
 	}
 }

@@ -1,4 +1,4 @@
-import Helper from './helper.js';
+import WebRtcHelper from './webRtcHelper.js';
 
 'use strict';
 
@@ -15,7 +15,7 @@ export default class CallIdUserPeer {
 
 
 	constructor() {
-		this.helper = new Helper();
+		this.helper = new WebRtcHelper();
 	}
 
 	async joinCall(e) {
