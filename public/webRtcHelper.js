@@ -1,9 +1,5 @@
 export default class WebRtcHelper {
 
-   /*
-   29a1c2dc14b2535bf72614cbc4ad28ac237ad363a6ac884864daca5df5f0873c  [{"url":"stun:global.stun.twilio.com:3478?transport=udp","urls":"stun:global.stun.twilio.com:3478?transport=udp"},{"url":"turn:global.turn.twilio.com:3478?transport=udp","username":"29a1c2dc14b2535bf72614cbc4ad28ac237ad363a6ac884864daca5df5f0873c","urls":"turn:global.turn.twilio.com:3478?transport=udp","credential":"EDspRW0NevUlkGzejv8WSJ/snlOPySnyNDJ8bk3hBJo="},{"url":"turn:global.turn.twilio.com:3478?transport=tcp","username":"29a1c2dc14b2535bf72614cbc4ad28ac237ad363a6ac884864daca5df5f0873c","urls":"turn:global.turn.twilio.com:3478?transport=tcp","credential":"EDspRW0NevUlkGzejv8WSJ/snlOPySnyNDJ8bk3hBJo="},{"url":"turn:global.turn.twilio.com:443?transport=tcp","username":"29a1c2dc14b2535bf72614cbc4ad28ac237ad363a6ac884864daca5df5f0873c","urls":"turn:global.turn.twilio.com:443?transport=tcp","credential":"EDspRW0NevUlkGzejv8WSJ/snlOPySnyNDJ8bk3hBJo="}]
-   */
-
    configuration = {
       iceServers: [
          {
