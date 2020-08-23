@@ -1,6 +1,6 @@
-# WebRTC - Introductory Tries
+# WebRTC : Video and DataChannel
 
-Testing video calling with TURN (TURN configurations removed).
+Testing video streaming and data channel with TURN (TURN configurations removed).
 
 
 https://tareqnewazshahriar.github.io/WebRTC-My-Inauguration/public/
