@@ -3,4 +3,4 @@
 Testing video calling with TURN (TURN configurations removed).
 
 
-https://tareqnewazshahriar.github.io/WebRTC-with-Firebase/public/
+https://tareqnewazshahriar.github.io/WebRTC-My-Inauguration/public/
