@@ -1,6 +1,5 @@
-# WebRTC : Video and DataChannel
+# Playing Around with WebRTC
 
-Testing video streaming and data channel with TURN (TURN configurations removed).
+Testing video streaming and data channel with TURN.
 
-
-https://tareqnewazshahriar.github.io/WebRTC-Video-and-DataChannel/public
+The Application: https://tareqnewazshahriar.github.io/Playing-Around-with-WebRTC/public
