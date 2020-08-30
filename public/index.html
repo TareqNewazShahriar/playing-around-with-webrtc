@@ -3,8 +3,9 @@
 
 <head>
 	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>WebRTC (STUN Only)</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <link rel="icon" href="assets/webrtc-526x512.png" type="image/png">
+	<title>Playing Around with WebRTC</title>
 
 	<!-- update the version number as needed -->
 	<script defer src="firebase/firebase-app.js"></script>
@@ -17,7 +18,9 @@
 </head>
 
 <body>
-	<h1>WebRTC (STUN Only)</h1>
+   <h1>Playing Around with WebRTC</h1>
+   <h4>Video streaming and data channel</h4>
+
 	<div id="buttons">
 		<button id="createBtn">Create Call ID</button>
 		<button id="joinBtn">Join The Call</button>
@@ -43,32 +46,39 @@
 		<video id="localVideo" autoplay playsinline></video>
 		<video id="remoteVideo" autoplay playsinline></video>
 		<audio id="ringtone" loop preload="auto" src="assets/incoming-call.mp3"></audio>
-		<button id="ans" style="display:none; width: 60%; position: fixed; bottom: 50px; left: 20%;">Answer</button>
+		<button id="ans" style="display:none; width: 60%; position: fixed; bottom: 100px; left: 20%;">Answer</button>
 	</div>
 	<div class="log-panel">
-		LOG
+      LOG
+      <button onclick="selectAllLog()" style="padding:3px 7px;">Select All</button>
 		<pre id="log"></pre>
 	</div>
 
-	<script type=module>
+	<script>
 		var logPanel = document.getElementById('log');
 		window.log = function(...params) {
 			logPanel.innerHTML += '\n\n' + params.map(x => JSON.stringify(x)).join(' \\\\ ');
 			console.log.apply(console, params);
-		}
+      }
+      
+      function selectAllLog() {
+         let range = document.createRange(); // initiated range object holds portion of a document that can contain nodes and parts of text nodes.
+         let el = document.querySelector('#log');
+         range.selectNodeContents(el);
 
-		function createScript(fileName) {
+         let selection = window.getSelection();
+         selection.removeAllRanges();
+         selection.addRange(range); 
+      }
+
+		function addScriptWithVersion(fileName) {
 			let script = document.createElement('script');
 			script.src = `${fileName}?v=${new Date().getTime()}`
 			script.type = 'module';
 			document.body.appendChild(script);
 		}
 
-		// createScript('callIdCreatorPeer.js');
-		// createScript('callIdUserPeer.js');
-		// createScript('helper.js');
-		createScript('app.js');
-
+		addScriptWithVersion('app.js');
 	</script>
 </body>
 
