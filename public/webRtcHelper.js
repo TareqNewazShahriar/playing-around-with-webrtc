@@ -140,7 +140,7 @@ export default class WebRtcHelper {
       document.querySelector('#joinBtn').disabled = true;
       document.querySelector('#createBtn').disabled = true;
       document.querySelector('#hangupBtn').disabled = true;
-      document.querySelector('#created-id').disabled = false;
+      document.querySelector('#created-id').disabled = true;
 
       // Delete call on hangup
       if (entityId) {
