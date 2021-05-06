@@ -21,31 +21,39 @@
    <h1>Playing Around with WebRTC</h1>
    <h4>Video streaming and data channel (stream text, files etc)</h4>
 
-	<div id="buttons">
-		<button id="createBtn">First, create call ID</button>
-		<button id="joinBtn">Join the call</button>
-		<button disabled id="hangupBtn">Hangup</button>
-		<button onclick="window.location.reload(true)">Reload</button>
-	</div>
-	<div id="created-id" disabled>
-		Call ID: <input id="createdCallId" type="text" readonly onfocus="this.select()" />
-      <br>
-      Copy this call ID, open this app on another browser or tab and click <strong>Join the Call</strong>
-	</div>
+   <fieldset>
+      <legend>Video Straming</legend>
+      
+      <div id="buttons">
+         <button id="createBtn">First, create call ID</button>
+         <button id="joinBtn">Join the call</button>
+         <button disabled id="hangupBtn">Hangup</button>
+         <button onclick="window.location.reload(true)">Reload</button>
+      </div>
+      <div id="created-id" disabled>
+         Call ID: <input id="createdCallId" type="text" readonly onfocus="this.select()" />
+         <br>
+         Copy this call ID, open this app on another browser or tab and click <strong>Join the Call</strong>
+      </div>
+   </fieldset>
 
-	<div>
-		<div>
-			<button id="createDcBtn">Create Data Channel ID</button>
-			<button id="joinDcBtn">Join Data Channel</button>
-		</div>
-		<div id="dc-pannel">
-			Data Channel ID <input id="dcId" type="text" readonly onfocus="this.select()" />
-         <br>
-         Copy this ID, open this app on another browser or tab and click <strong>Join Data Channel</strong>
-         <br>
-			<input id="file" type="file" />
-		</div>
-	</div>
+   <fieldset>
+      <legend>Text, file Stream</legend>
+   
+      <div>
+         <div>
+            <button id="createDcBtn">Create Data Channel ID</button>
+            <button id="joinDcBtn">Join Data Channel</button>
+         </div>
+         <div id="dc-pannel">
+            Data Channel ID <input id="dcId" type="text" readonly onfocus="this.select()" />
+            <br>
+            Copy this ID, open this app on another browser or tab and click <strong>Join Data Channel</strong>
+            <br>
+            <input id="file" type="file" />
+         </div>
+      </div>
+   </fieldset>
 
 	<div id="videos">
 		<video id="localVideo" autoplay playsinline></video>
