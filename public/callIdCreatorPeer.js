@@ -29,7 +29,7 @@ export default class CallIdCreatorPeer {
 
 		await this.createOffer(this.peerConnection, callRef);
 		document.getElementById('createdCallId').value = callRef.id;
-		document.getElementById('created-id').style.display = 'block';
+		document.getElementById('created-id').disabled = false;
 
 		this.remoteStream = this.helper.initRemoteStream(this.peerConnection);
 		await this.listeningForAnswerSdp(this.peerConnection, callRef);
