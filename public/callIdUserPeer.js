@@ -1,3 +1,4 @@
+import Constants from './Constants.js';
 import WebRtcHelper from './webRtcHelper.js';
 
 'use strict';
@@ -12,6 +13,12 @@ export default class CallIdUserPeer {
 	dcPeerConnection = null;
 	dataChannel = null;
 	dataChannelOpened = false;
+
+   fileSize = null;
+   fileName = null;
+   fileTransferProgress = null;
+   receiveBuffer = [];
+   receivedSize = 0;
 
 
 	constructor() {
@@ -90,10 +97,46 @@ export default class CallIdUserPeer {
 			this.dataChannel.addEventListener('close', event => {
 				log('data channel closed.', event);
 			});
-			this.dataChannel.addEventListener('message', event => {
-				log('data channel message:', event.data);
-				this.dataChannel.send("got it");
-			});
+			this.dataChannel.addEventListener('message', onMessaceReceived);
 		});
 	}
+
+   onMessaceReceived(event) {
+      log('data channel message:', event.data);
+      
+      let data = JSON.parse(event.data);
+
+      // prepare to receive binary data on next message event
+      if(data.comingType === Constants.DataChannelTransferType.binaryData) {
+         this.dataChannel.binaryType = Constants.DataChannelTransferType.binaryData;
+         this.fileSize = data.data.size;
+         this.fileName = data.data.name;
+         this.fileTransferProgress = document.querySelector('#fileTransferProgress');
+         this.fileTransferProgress.max = this.fileSize;
+         this.receiveBuffer = [];
+         this.receivedSize = 0;
+      }
+
+      // Now binary data is coming
+      if(data.byteLength) {
+         this.receiveBuffer.push(data);
+         this.receivedSize += data.byteLength;
+         this.fileTransferProgress.value = this.receivedSize;
+
+         // when upload completed
+         if (receivedSize === this.fileSize) {
+            const received = new Blob(this.receiveBuffer);
+            receiveBuffer = [];
+
+            let downloadAnchor = document.querySelector('#downloadFileAnchor');
+            downloadAnchor.href = URL.createObjectURL(received);
+            downloadAnchor.download = this.fileName;
+            downloadAnchor.textContent =
+               `Click to download '${this.fileName}' (${this.fileSize} bytes)`;
+            downloadAnchor.style.display = 'block';
+
+            const bitrate = Math.round(receivedSize * 8 / ((new Date()).getTime() - timestampStart));
+         }
+      }
+   }
 }

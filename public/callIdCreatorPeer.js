@@ -1,4 +1,5 @@
 import WebRtcHelper from './webRtcHelper.js';
+import Constants from './Constants';
 
 export default class CallIdCreatorPeer {
 	helper = null;
@@ -101,22 +102,43 @@ export default class CallIdCreatorPeer {
 			this.dataChannelOpened = true;
 			log('data channel opened.', event);
 
-			this.dataChannel.send(JSON.stringify({ name: 'ok', msg: 'hey' }));
+			this.dataChannel.send(JSON.stringify({ type: Constants.DataChannelTransferType.message, data: { name: 'ok', msg: 'hey' } }));
 		})
 		this.dataChannel.addEventListener('close', event => {
 			log('data channel closed.', event);
 		});
 		this.dataChannel.addEventListener('message', event => {
-			log('data channel message:', event.data);
+			log('data channel message:', event.data.data);
 		});
 	}
 
-	sendFile(file) {
-		let sliced = file.slice(0, file.size);
-		let reader = new FileReader();
-		reader.addEventListener('load', e => {
-			this.dataChannel.send(e.target.result);
-		});
-		reader.readAsArrayBuffer(sliced);
-	}
+   sendFile(file) {
+      log(`File is ${[file.name, file.size, file.type, file.lastModified].join(' ')}`);
+
+      this.dataChannel.send(JSON.stringify({ type: Constants.DataChannelTransferType.message, comingType: Constants.DataChannelTransferType.binaryData, data: { size: file.size, name: file.name }}));
+
+      let fileTransferProgress = document.querySelector('#fileTransferProgress');
+      fileTransferProgress.max = file.size;
+      fileTransferProgress.value = 0;
+   
+      let offset = 0;
+      fileReader = new FileReader();
+      fileReader.addEventListener('error', error => log('Error reading file:', error));
+      fileReader.addEventListener('abort', event => log('File reading aborted:', event));
+      
+      fileReader.addEventListener('load', e => {
+         this.dataChannel.send(e.target.result);
+         offset += e.target.result.byteLength;
+         sendProgress.value = offset;
+         if (offset < file.size) {
+            readSlice(offset);
+         }
+      });
+
+      const readSlice = currentOffset => {
+         const slice = file.slice(currentOffset, currentOffset + Constants.FileChunkSize);
+         fileReader.readAsArrayBuffer(slice);
+      };
+      readSlice(0);
+   }
 }
