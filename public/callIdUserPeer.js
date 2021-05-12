@@ -19,6 +19,7 @@ export default class CallIdUserPeer {
    fileTransferProgress = null;
    receiveBuffer = [];
    receivedSize = 0;
+   fileTransferBegin = null;
 
 
 	constructor() {
@@ -95,47 +96,49 @@ export default class CallIdUserPeer {
 				log('data channel opened.', event);
 			})
 			this.dataChannel.addEventListener('close', event => {
+            this.dataChannelOpened = false;
 				log('data channel closed.', event);
 			});
-			this.dataChannel.addEventListener('message', onMessaceReceived);
+			this.dataChannel.addEventListener('message', event => this.onMessageReceived(event));
 		});
 	}
 
-   onMessaceReceived(event) {
-      log('data channel message:', event.data);
-      
-      let data = JSON.parse(event.data);
+   onMessageReceived(event) {
+      log('data received', event.data);
 
-      // prepare to receive binary data on next message event
-      if(data.comingType === Constants.DataChannelTransferType.binaryData) {
-         this.dataChannel.binaryType = Constants.DataChannelTransferType.binaryData;
-         this.fileSize = data.data.size;
-         this.fileName = data.data.name;
-         this.fileTransferProgress = document.querySelector('#fileTransferProgress');
-         this.fileTransferProgress.max = this.fileSize;
-         this.receiveBuffer = [];
-         this.receivedSize = 0;
+      if(typeof event.data === 'string') { // prepare to receive binary data on next message event
+         let data = JSON.parse(event.data);
+
+         if(data.comingType === Constants.DataChannelTransferType.binaryData) {
+            this.dataChannel.binaryType = Constants.DataChannelTransferType.binaryData;
+            this.fileSize = data.data.size;
+            this.fileName = data.data.name;
+            this.fileTransferProgress = document.querySelector('#fileTransferProgress');
+            this.fileTransferProgress.max = this.fileSize;
+            this.receiveBuffer = [];
+            this.receivedSize = 0;
+            this.fileTransferBegin = (new Date()).getTime();
+         }
       }
-
-      // Now binary data is coming
-      if(data.byteLength) {
+      else if(event.data instanceof ArrayBuffer) { // Now binary data is coming
+         let data = event.data;
          this.receiveBuffer.push(data);
          this.receivedSize += data.byteLength;
          this.fileTransferProgress.value = this.receivedSize;
 
          // when upload completed
-         if (receivedSize === this.fileSize) {
-            const received = new Blob(this.receiveBuffer);
-            receiveBuffer = [];
+         if (this.receivedSize >= this.fileSize) {
+            const blob = new Blob(this.receiveBuffer);
+            this.receiveBuffer = [];
 
             let downloadAnchor = document.querySelector('#downloadFileAnchor');
-            downloadAnchor.href = URL.createObjectURL(received);
+            downloadAnchor.href = URL.createObjectURL(blob);
             downloadAnchor.download = this.fileName;
             downloadAnchor.textContent =
                `Click to download '${this.fileName}' (${this.fileSize} bytes)`;
             downloadAnchor.style.display = 'block';
 
-            const bitrate = Math.round(receivedSize * 8 / ((new Date()).getTime() - timestampStart));
+            const bitrate = Math.round(this.receivedSize * 8 / ((new Date()).getTime() - this.fileTransferBegin));
          }
       }
    }
