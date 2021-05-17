@@ -98,6 +98,7 @@ export default class CallIdUserPeer {
          this.dataChannel.addEventListener('close', event => {
             this.dataChannelOpened = false;
             log('data channel closed.', event);
+            alert('data channel close event fired on user side.');
          });
          this.dataChannel.addEventListener('message', event => this.onMessageReceived(event));
       });

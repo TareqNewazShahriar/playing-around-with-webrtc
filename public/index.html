@@ -22,7 +22,7 @@
    <h4>Video streaming and data channel (stream text, files etc)</h4>
 
    <fieldset>
-      <legend>Video Stram</legend>
+      <legend>Video Stream</legend>
       
       <div id="buttons">
          <button id="createBtn">First, create call ID</button>
@@ -32,13 +32,15 @@
       </div>
       <div id="created-id">
          Call ID: <input id="createdCallId" type="text" readonly onfocus="this.select()" />
-         <br>
-         Copy this call ID, open this app on another browser or tab and click <strong>Join the Call</strong>
+         <p style="border-left: 5px solid gray; padding: 5px 10px; background-color: whitesmoke;">
+            Create and copy the call ID, open this app on another browser or tab and click <strong>Join the Call</strong>
+         </p>
       </div>
    </fieldset>
-
+   <br>
+   <br>
    <fieldset>
-      <legend>Data (message, file etc) Stream</legend>
+      <legend>Data (message, file etc) Channel</legend>
    
       <div>
          <div>
@@ -47,8 +49,9 @@
          </div>
          <div id="dc-pannel">
             Data Channel ID <input id="dcId" type="text" readonly onfocus="this.select()" />
-            <br>
-            Copy this ID, open this app on another browser or tab and click <strong>Join Data Channel</strong>
+            <p style="border-left: 5px solid gray; padding: 5px 10px; background-color: whitesmoke;">
+               Create and copy the Data Channel ID, open this app on another browser or tab and click <strong>Join Data Channel</strong>
+            </p>
             <br>
             <input id="file" type="file" />
             <progress id="fileTransferProgress" value="0" style="width:150px;"></progress>

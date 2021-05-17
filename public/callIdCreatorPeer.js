@@ -113,6 +113,7 @@ export default class CallIdCreatorPeer {
       this.dataChannel.addEventListener('close', event => {
          this.dataChannelOpened = false;
          log('data channel closed.', event);
+         alert('data channel close event fired on creator side.');
       });
       this.dataChannel.addEventListener('message', event => {
          log('data received:', event.data.data);
