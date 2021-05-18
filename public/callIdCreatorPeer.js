@@ -83,10 +83,10 @@ export default class CallIdCreatorPeer {
       });
    }
 
-   async initDataChannel() {
+   async initDataChannel(channelName) {
       let dcRef = await this.helper.getDbEntityReference("dataChannels");
       this.dcPeerConnection = this.helper.initializePeerConnection();
-      this.dataChannel = this.dcPeerConnection.createDataChannel("anyName");
+      this.dataChannel = this.dcPeerConnection.createDataChannel(channelName);
       this.helper.gatherLocalIceCandidates(this.dcPeerConnection, dcRef, "callerCandidates");
 
       this.createOffer(this.dcPeerConnection, dcRef);

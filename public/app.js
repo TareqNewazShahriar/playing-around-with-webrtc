@@ -9,8 +9,8 @@ class App {
 		document.querySelector('#createBtn').addEventListener('click', e => idCreator.createCallId(e));
 		document.querySelector('#joinBtn').addEventListener('click', e => idUser.joinCall(e));
 
-		document.querySelector('#createDcBtn').addEventListener('click', e => idCreator.initDataChannel(e));
-		document.querySelector('#joinDcBtn').addEventListener('click', e => idUser.initDataChannel(e));
+		document.querySelector('#createDcBtn').addEventListener('click', e => idCreator.initDataChannel('messaging'));
+		document.querySelector('#joinDcBtn').addEventListener('click', e => idUser.initDataChannel());
 
 		document.querySelector('#file').addEventListener('change', e => {
 			log(e);
