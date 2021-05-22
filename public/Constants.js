@@ -1,6 +1,14 @@
-const Constants = {
-   DataChannelTransferType: { binaryData: 'arraybuffer', message: null },
+const DB = {
+   data_channel_entity_name: 'dataChannels'
+}
+
+const CALL_CONNECTION = {
+
+}
+
+const DATA_CHANNEL = {
+   DataTypes: { binaryData: 'arraybuffer', message: null },
    FileChunkSize: 16384
 };
 
-export default Constants;
+export { DB, CALL_CONNECTION, DATA_CHANNEL };

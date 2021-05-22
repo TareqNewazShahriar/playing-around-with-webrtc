@@ -1,8 +1,8 @@
-import Constants from './Constants.js';
+import {DATA_CHANNEL, DB} from './Constants.js';
 import WebRtcHelper from './webRtcHelper.js';
 
-export default class DataChannelCreator {
-      messagingChannel = {
+export default class DataChannelListener {
+   messagingChannel = {
       id: null,
       connection: null,
       channel: null,
@@ -16,40 +16,40 @@ export default class DataChannelCreator {
       connected: false
    }
    
-   async initDataChannel(channelName, connectionObj) {
-      let dcRef = await WebRtcHelper.getDbEntityReference("dataChannels");
-      connectionObj.connection = WebRtcHelper.createPeerConnection();
-      connectionObj.channel = connectionObj.connection.createDataChannel(channelName);
-      helper.gatherLocalIceCandidates(connectionObj.connection, dcRef, "callerCandidates");
+   async initDataChannel(channelName) {
+      let dcRef = await WebRtcHelper.getDbEntityReference(DB.data_channel_entity_name);
+      this.messagingChannel.connection = WebRtcHelper.createPeerConnection();
+      this.messagingChannel.channel = this.messagingChannel.connection.createDataChannel(channelName);
+      helper.gatherLocalIceCandidates(this.messagingChannel.connection, dcRef, "callerCandidates");
 
-      this.createOffer(connectionObj.connection, dcRef);
-      connectionObj.id = dcRef.id;
+      WebRtcHelper.createOffer(this.messagingChannel.connection, dcRef);
+      this.messagingChannel.id = dcRef.id;
       document.getElementById('dcId').value = dcRef.id;
       document.getElementById('dc-pannel').style.display = 'block';
 
-      this.listeningForAnswerSdp(connectionObj.connection, dcRef);
-      await WebRtcHelper.gatherRemoteIceCandidates(connectionObj.connection, dcRef, "calleeCandidates");
+      await WebRtcHelper.listenForAnswerSdp(this.messagingChannel.connection, dcRef);
+      await WebRtcHelper.gatherRemoteIceCandidates(this.messagingChannel.connection, dcRef, "calleeCandidates");
       // no data-clear for now
 
 
-      connectionObj.channel.addEventListener('open', event => {
-         connectionObj.connected = true;
+      this.messagingChannel.channel.addEventListener('open', event => {
+         this.messagingChannel.connected = true;
          log('data channel opened.', event);
 
-         connectionObj.channel.send(JSON.stringify({
-            type: Constants.DataChannelTransferType.message,
+         this.messagingChannel.channel.send(JSON.stringify({
+            type: DATA_CHANNEL.DataTypes.message,
             data: {
                name: 'ok',
                msg: 'hey'
             }
          }));
       })
-      connectionObj.channel.addEventListener('close', event => {
-         connectionObj.connected = false;
+      this.messagingChannel.channel.addEventListener('close', event => {
+         this.messagingChannel.connected = false;
          log('data channel closed.', event);
          alert('data channel close event fired on creator side.');
       });
-      connectionObj.channel.addEventListener('message', event => {
+      this.messagingChannel.channel.addEventListener('message', event => {
          log('data received:', event.data.data);
       });
    }
@@ -58,8 +58,8 @@ export default class DataChannelCreator {
       log(`File is ${[file.name, file.size, file.type, file.lastModified].join(' ')}`);
 
       this.messagingChannel.channel.send(JSON.stringify({
-         type: Constants.DataChannelTransferType.message,
-         comingType: Constants.DataChannelTransferType.binaryData,
+         type: DATA_CHANNEL.DataChannelTransferType.message,
+         comingType: DATA_CHANNEL.DataChannelTransferType.binaryData,
          data: {
             size: file.size,
             name: file.name
@@ -85,11 +85,11 @@ export default class DataChannelCreator {
       });
 
       const readSlice = offset => {
-         const slice = file.slice(offset, offset + Constants.FileChunkSize);
+         const slice = file.slice(offset, offset + DATA_CHANNEL.FileChunkSize);
          fileReader.readAsArrayBuffer(slice);
       };
 
-      this.messagingChannel.channel.binaryType = Constants.DataChannelTransferType.binaryData;
+      this.messagingChannel.channel.binaryType = DATA_CHANNEL.DataChannelTransferType.binaryData;
       readSlice(0);
    }
 }

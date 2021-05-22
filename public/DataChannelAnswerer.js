@@ -1,9 +1,9 @@
-import Constants from './Constants.js';
+import {DATA_CHANNEL} from './Constants.js';
 import WebRtcHelper from './webRtcHelper.js';
 
 'use strict';
 
-export default class DataChannelUser {
+export default class DataChannelAnswerer {
 
    messagingChannel = { 
       connection: null,
@@ -20,7 +20,7 @@ export default class DataChannelUser {
       transferBegin: null
    }
 
-   async initDataChannel(connectionObj) {
+   async initDataChannel() {
       let dcId = prompt("Data Channel ID");
       let dcRef = await WebRtcHelper.getDbEntityReference("dataChannels", dcId);
       if (!(await dcRef.get()).exists) {
@@ -29,25 +29,25 @@ export default class DataChannelUser {
          return;
       }
 
-      connectionObj.connection = WebRtcHelper.createPeerConnection();
-      await WebRtcHelper.gatherLocalIceCandidates(connectionObj.connection, dcRef, "calleeCandidates");
-      await WebRtcHelper.createAnswer(connectionObj.connection, dcRef);
-      await WebRtcHelper.gatherRemoteIceCandidates(connectionObj.connection, dcRef, "callerCandidates");
+      this.messagingChannel.connection = WebRtcHelper.createPeerConnection();
+      await WebRtcHelper.gatherLocalIceCandidates(this.messagingChannel.connection, dcRef, "calleeCandidates");
+      await WebRtcHelper.createAnswer(this.messagingChannel.connection, dcRef);
+      await WebRtcHelper.gatherRemoteIceCandidates(this.messagingChannel.connection, dcRef, "callerCandidates");
 
-      connectionObj.connection.addEventListener('datachannel', event => {
-         connectionObj.channel = event.channel;
+      this.messagingChannel.connection.addEventListener('datachannel', event => {
+         this.messagingChannel.channel = event.channel;
          log('data channel received.', event);
 
-         connectionObj.channel.addEventListener('open', event => {
-            connectionObj.connected = true;
+         this.messagingChannel.channel.addEventListener('open', event => {
+            this.messagingChannel.connected = true;
             log('data channel opened.', event);
          })
-         connectionObj.channel.addEventListener('close', event => {
-            connectionObj.connected = false;
+         this.messagingChannel.channel.addEventListener('close', event => {
+            this.messagingChannel.connected = false;
             log('data channel closed.', event);
             alert('data channel close event fired on user side.');
          });
-         connectionObj.channel.addEventListener('message', event => this.onMessageReceived(event));
+         this.messagingChannel.channel.addEventListener('message', event => this.onMessageReceived(event));
       });
    }
 
@@ -57,8 +57,8 @@ export default class DataChannelUser {
       if (typeof event.data === 'string') { // prepare to receive binary data on next message event
          let data = JSON.parse(event.data);
 
-         if (data.comingType === Constants.DataChannelTransferType.binaryData) {
-            this.messagingChannel.channel.binaryType = Constants.DataChannelTransferType.binaryData;
+         if (data.comingType === DATA_CHANNEL.DataChannelTransferType.binaryData) {
+            this.messagingChannel.channel.binaryType = DATA_CHANNEL.DataChannelTransferType.binaryData;
             this.fileSize = data.data.size;
             this.binaryData.fileName = data.data.name;
             this.binaryData.progress = document.querySelector('#fileTransferProgress');

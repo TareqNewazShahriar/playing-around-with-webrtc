@@ -11,7 +11,7 @@ export default class WebRtcHelper {
       ]
    };
 
-   static async openDeviceMedia(e) {
+   static async accessDeviceMedia(e) {
       let localStream;
       try {
          localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
@@ -119,6 +119,21 @@ export default class WebRtcHelper {
       /// -------
    }
 
+   static async createOffer(peerConnection, entityRef) {
+      const offer = await peerConnection.createOffer();
+      await peerConnection.setLocalDescription(offer);
+      log('Created offer:', offer);
+
+      const callWithOffer = {
+         'offer': {
+            type: offer.type,
+            sdp: offer.sdp,
+         },
+      };
+      await entityRef.set(callWithOffer);
+      log(`New entity created with SDP offer. entity ID: ${entityRef.id}`);
+   }
+
    static async createAnswer(peerConnection, entityRef) {
       const snapshot = await entityRef.get();
       const offer = snapshot.data().offer;
@@ -135,6 +150,17 @@ export default class WebRtcHelper {
          },
       };
       await entityRef.update(withAnswer);
+   }
+
+   static async listenForAnswerSdp(peerConnection, entityRef) {
+      entityRef.onSnapshot(async snapshot => {
+         const data = snapshot.data();
+         if (!peerConnection.currentRemoteDescription && data && data.answer) {
+            log('Got remote description: ', data.answer);
+            const rtcSessionDescription = new RTCSessionDescription(data.answer);
+            await peerConnection.setRemoteDescription(rtcSessionDescription);
+         }
+      });
    }
 
    static async hangUp(e, peerConnection, remoteStream, entityName, entityId) {

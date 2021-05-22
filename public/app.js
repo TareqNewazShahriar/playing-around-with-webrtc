@@ -1,14 +1,14 @@
-import CallConnectionCreator from './CallConnectionCreator.js';
-import CallConnectionUser from './callConnectionUser.js';
-import DataChannelCreator from './dataChannelCreator.js';
-import DataChannelUser from './dataChannelUser.js';
+import CallConnectionListener from './CallConnectionListener.js';
+import CallConnectionAnswerer from './CallConnectionAnswerer.js';
+import DataChannelListener from './DataChannelListener.js';
+import DataChannelAnswerer from './DataChannelAnswerer.js';
 
 class App {
    constructor() {
-      let callCreator = new CallConnectionCreator();
-      let callUser = new CallConnectionUser();
-      let dataChannelCreator = new DataChannelCreator();
-      let dataChannelUser = new DataChannelUser();
+      let callCreator = new CallConnectionListener();
+      let callUser = new CallConnectionAnswerer();
+      let dataChannelCreator = new DataChannelListener();
+      let dataChannelUser = new DataChannelAnswerer();
 
       document.querySelector('#createBtn').addEventListener('click', e => callCreator.createCallId(e));
       document.querySelector('#joinBtn').addEventListener('click', e => callUser.joinCall(e));

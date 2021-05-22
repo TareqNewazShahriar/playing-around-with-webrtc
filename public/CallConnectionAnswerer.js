@@ -2,7 +2,7 @@ import WebRtcHelper from './webRtcHelper.js';
 
 'use strict';
 
-export default class CallConnectionUser {
+export default class CallConnectionAnswerer {
    
    callConnection = {
       connection: null,
@@ -27,7 +27,7 @@ export default class CallConnectionUser {
          return;
       }
 
-      this.callConnection.localStream = await WebRtcHelper.openDeviceMedia(e);
+      this.callConnection.localStream = await WebRtcHelper.accessDeviceMedia(e);
       this.callConnection.connection = WebRtcHelper.createPeerConnection();
       WebRtcHelper.addTracksToLocalStream(this.callConnection.connection, this.callConnection.localStream);
       WebRtcHelper.gatherLocalIceCandidates(this.callConnection.connection, callRef, 'calleeCandidates');
