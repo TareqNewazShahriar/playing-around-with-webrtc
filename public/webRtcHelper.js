@@ -11,7 +11,6 @@ export default class WebRtcHelper {
       ]
    };
 
-
    static async openDeviceMedia(e) {
       let localStream;
       try {
@@ -31,7 +30,7 @@ export default class WebRtcHelper {
       return localStream;
    }
 
-   static initAndGetPeerConnection() {
+   static createPeerConnection() {
       let peerConnection = new RTCPeerConnection(this.configuration);
       log('Create PeerConnection with configuration: ', this.configuration);
 
@@ -60,7 +59,6 @@ export default class WebRtcHelper {
       const entityRef = id ? entity.doc(id) : entity.doc();
       return entityRef;
    }
-
 
    static addTracksToLocalStream(peerConnection, localStream) {
       document.querySelector('#localVideo').srcObject = localStream;
@@ -119,6 +117,24 @@ export default class WebRtcHelper {
       //		await peerConnection.addIceCandidate(new RTCIceCandidate(data));
       // });
       /// -------
+   }
+
+   static async createAnswer(peerConnection, entityRef) {
+      const snapshot = await entityRef.get();
+      const offer = snapshot.data().offer;
+      log('Got offer:', offer);
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+      const answer = await peerConnection.createAnswer();
+      log('Created answer:', answer);
+      await peerConnection.setLocalDescription(answer);
+
+      const withAnswer = {
+         answer: {
+            type: answer.type,
+            sdp: answer.sdp,
+         },
+      };
+      await entityRef.update(withAnswer);
    }
 
    static async hangUp(e, peerConnection, remoteStream, entityName, entityId) {
