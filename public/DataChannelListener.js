@@ -20,7 +20,7 @@ export default class DataChannelListener {
       let dcRef = await WebRtcHelper.getDbEntityReference(DB.data_channel_entity_name);
       this.messagingChannel.connection = WebRtcHelper.createPeerConnection();
       this.messagingChannel.channel = this.messagingChannel.connection.createDataChannel(channelName);
-      helper.gatherLocalIceCandidates(this.messagingChannel.connection, dcRef, "callerCandidates");
+      WebRtcHelper.gatherLocalIceCandidates(this.messagingChannel.connection, dcRef, "callerCandidates");
 
       WebRtcHelper.createOffer(this.messagingChannel.connection, dcRef);
       this.messagingChannel.id = dcRef.id;
@@ -47,7 +47,7 @@ export default class DataChannelListener {
       this.messagingChannel.channel.addEventListener('close', event => {
          this.messagingChannel.connected = false;
          log('data channel closed.', event);
-         alert('data channel close event fired on creator side.');
+         alert('data channel closed.');
       });
       this.messagingChannel.channel.addEventListener('message', event => {
          log('data received:', event.data.data);
@@ -58,8 +58,8 @@ export default class DataChannelListener {
       log(`File is ${[file.name, file.size, file.type, file.lastModified].join(' ')}`);
 
       this.messagingChannel.channel.send(JSON.stringify({
-         type: DATA_CHANNEL.DataChannelTransferType.message,
-         comingType: DATA_CHANNEL.DataChannelTransferType.binaryData,
+         type: DATA_CHANNEL.DataTypes.message,
+         comingType: DATA_CHANNEL.DataTypes.binaryData,
          data: {
             size: file.size,
             name: file.name
@@ -89,7 +89,7 @@ export default class DataChannelListener {
          fileReader.readAsArrayBuffer(slice);
       };
 
-      this.messagingChannel.channel.binaryType = DATA_CHANNEL.DataChannelTransferType.binaryData;
+      this.messagingChannel.channel.binaryType = DATA_CHANNEL.DataTypes.binaryData;
       readSlice(0);
    }
 }

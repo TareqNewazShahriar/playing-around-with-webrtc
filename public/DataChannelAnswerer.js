@@ -45,7 +45,7 @@ export default class DataChannelAnswerer {
          this.messagingChannel.channel.addEventListener('close', event => {
             this.messagingChannel.connected = false;
             log('data channel closed.', event);
-            alert('data channel close event fired on user side.');
+            alert('data channel closed.');
          });
          this.messagingChannel.channel.addEventListener('message', event => this.onMessageReceived(event));
       });
@@ -57,8 +57,8 @@ export default class DataChannelAnswerer {
       if (typeof event.data === 'string') { // prepare to receive binary data on next message event
          let data = JSON.parse(event.data);
 
-         if (data.comingType === DATA_CHANNEL.DataChannelTransferType.binaryData) {
-            this.messagingChannel.channel.binaryType = DATA_CHANNEL.DataChannelTransferType.binaryData;
+         if (data.comingType === DATA_CHANNEL.DataTypes.binaryData) {
+            this.messagingChannel.channel.binaryType = DATA_CHANNEL.DataTypes.binaryData;
             this.fileSize = data.data.size;
             this.binaryData.fileName = data.data.name;
             this.binaryData.progress = document.querySelector('#fileTransferProgress');
