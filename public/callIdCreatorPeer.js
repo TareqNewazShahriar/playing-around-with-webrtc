@@ -2,19 +2,27 @@ import Constants from './Constants.js';
 import WebRtcHelper from './webRtcHelper.js';
 
 export default class CallIdCreatorPeer {
-   helper = null;
+   
+   callConnection = {
+      id: null,
+      connection: null,
+      localStream: null,
+      remoteStream: null,
+      remoteStreamList: []
+   }
 
-   peerConnection = null;
-   localStream = null;
-   remoteStream = null;
-   remoteStreamList = [];
+   messagingChannel = {
+      id: null,
+      connection: null,
+      channel: null,
+      connected: false
+   }
 
-   dcPeerConnection = null;
-   dataChannel = null;
-   dataChannelOpened = false;
-
-   constructor() {
-      this.helper = new WebRtcHelper();
+   binaryDataChannel = {
+      id: null,
+      connection: null,
+      channel: null,
+      connected: false
    }
 
    async createCallId(e) {
@@ -22,21 +30,21 @@ export default class CallIdCreatorPeer {
       document.querySelector('#joinBtn').disabled = true;
       document.querySelector('#hangupBtn').disabled = false;
 
-      let callRef = await this.helper.getDbEntityReference("calls");
-      this.localStream = await this.helper.openUserMedia(e);
-      this.peerConnection = this.helper.initializePeerConnection();
-      this.helper.addTracksToLocalStream(this.peerConnection, this.localStream);
-      this.helper.gatherLocalIceCandidates(this.peerConnection, callRef, 'callerCandidates');
+      let callRef = await this.WebRtcHelper.getDbEntityReference("calls");
+      this.callConnection.localStream = await this.WebRtcHelper.openUserMedia(e);
+      this.callConnection.connection = this.WebRtcHelper.initializePeerConnection();
+      this.WebRtcHelper.addTracksToLocalStream(this.callConnection.connection, this.callConnection.localStream);
+      this.WebRtcHelper.gatherLocalIceCandidates(this.callConnection.connection, callRef, 'callerCandidates');
 
-      await this.createOffer(this.peerConnection, callRef);
+      await this.createOffer(this.callConnection.connection, callRef);
       document.getElementById('createdCallId').value = callRef.id;
 
-      this.remoteStream = this.helper.initRemoteStream(this.peerConnection);
-      await this.listeningForAnswerSdp(this.peerConnection, callRef);
-      await this.helper.gatherRemoteIceCandidates(this.peerConnection, callRef, 'calleeCandidates');
-      this.ringWhenConnected(this.peerConnection, this.remoteStream);
+      this.callConnection.remoteStream = this.WebRtcHelper.initRemoteStream(this.callConnection.connection);
+      await this.listeningForAnswerSdp(this.callConnection.connection, callRef);
+      await this.WebRtcHelper.gatherRemoteIceCandidates(this.callConnection.connection, callRef, 'calleeCandidates');
+      this.ringWhenConnected(this.callConnection.connection, this.callConnection.remoteStream);
 
-      document.querySelector('#hangupBtn').addEventListener('click', e => this.helper.hangUp(e, this.peerConnection, this.remoteStream, "calls", callRef.id));
+      document.querySelector('#hangupBtn').addEventListener('click', e => this.WebRtcHelper.hangUp(e, this.callConnection.connection, this.callConnection.remoteStream, "calls", callRef.id));
    }
 
    async createOffer(peerConnection, entityRef) {
@@ -83,26 +91,27 @@ export default class CallIdCreatorPeer {
       });
    }
 
-   async initDataChannel(channelName) {
-      let dcRef = await this.helper.getDbEntityReference("dataChannels");
-      this.dcPeerConnection = this.helper.initializePeerConnection();
-      this.dataChannel = this.dcPeerConnection.createDataChannel(channelName);
-      this.helper.gatherLocalIceCandidates(this.dcPeerConnection, dcRef, "callerCandidates");
+   async initDataChannel(channelName, connectionObj) {
+      let dcRef = await this.WebRtcHelper.getDbEntityReference("dataChannels");
+      connectionObj.connection = this.WebRtcHelper.initializePeerConnection();
+      connectionObj.channel = connectionObj.connection.createDataChannel(channelName);
+      helper.gatherLocalIceCandidates(connectionObj.connection, dcRef, "callerCandidates");
 
-      this.createOffer(this.dcPeerConnection, dcRef);
+      this.createOffer(connectionObj.connection, dcRef);
+      connectionObj.id = dcRef.id;
       document.getElementById('dcId').value = dcRef.id;
       document.getElementById('dc-pannel').style.display = 'block';
 
-      this.listeningForAnswerSdp(this.dcPeerConnection, dcRef);
-      await this.helper.gatherRemoteIceCandidates(this.dcPeerConnection, dcRef, "calleeCandidates");
+      this.listeningForAnswerSdp(connectionObj.connection, dcRef);
+      await this.WebRtcHelper.gatherRemoteIceCandidates(connectionObj.connection, dcRef, "calleeCandidates");
       // no data-clear for now
 
 
-      this.dataChannel.addEventListener('open', event => {
-         this.dataChannelOpened = true;
+      connectionObj.channel.addEventListener('open', event => {
+         connectionObj.connected = true;
          log('data channel opened.', event);
 
-         this.dataChannel.send(JSON.stringify({
+         connectionObj.channel.send(JSON.stringify({
             type: Constants.DataChannelTransferType.message,
             data: {
                name: 'ok',
@@ -110,12 +119,12 @@ export default class CallIdCreatorPeer {
             }
          }));
       })
-      this.dataChannel.addEventListener('close', event => {
-         this.dataChannelOpened = false;
+      connectionObj.channel.addEventListener('close', event => {
+         connectionObj.connected = false;
          log('data channel closed.', event);
          alert('data channel close event fired on creator side.');
       });
-      this.dataChannel.addEventListener('message', event => {
+      connectionObj.channel.addEventListener('message', event => {
          log('data received:', event.data.data);
       });
    }
@@ -123,7 +132,7 @@ export default class CallIdCreatorPeer {
    sendFile(file) {
       log(`File is ${[file.name, file.size, file.type, file.lastModified].join(' ')}`);
 
-      this.dataChannel.send(JSON.stringify({
+      this.messagingChannel.channel.send(JSON.stringify({
          type: Constants.DataChannelTransferType.message,
          comingType: Constants.DataChannelTransferType.binaryData,
          data: {
@@ -142,7 +151,7 @@ export default class CallIdCreatorPeer {
       fileReader.addEventListener('abort', event => log('File reading aborted:', event));
 
       fileReader.addEventListener('load', e => {
-         this.dataChannel.send(e.target.result);
+         this.messagingChannel.channel.send(e.target.result);
          currentOffset += e.target.result.byteLength;
          fileTransferProgress.value = currentOffset;
          if (currentOffset < file.size) {
@@ -155,7 +164,7 @@ export default class CallIdCreatorPeer {
          fileReader.readAsArrayBuffer(slice);
       };
 
-      this.dataChannel.binaryType = Constants.DataChannelTransferType.binaryData;
+      this.messagingChannel.channel.binaryType = Constants.DataChannelTransferType.binaryData;
       readSlice(0);
    }
 }

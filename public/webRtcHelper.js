@@ -12,7 +12,7 @@ export default class WebRtcHelper {
    };
 
 
-   async openUserMedia(e) {
+   static async openDeviceMedia(e) {
       let localStream;
       try {
          localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
@@ -31,7 +31,7 @@ export default class WebRtcHelper {
       return localStream;
    }
 
-   initializePeerConnection() {
+   static initAndGetPeerConnection() {
       let peerConnection = new RTCPeerConnection(this.configuration);
       log('Create PeerConnection with configuration: ', this.configuration);
 
@@ -54,7 +54,7 @@ export default class WebRtcHelper {
       return peerConnection;
    }
 
-   async getDbEntityReference(entityName, id) {
+   static async getDbEntityReference(entityName, id) {
       const db = firebase.firestore();
       const entity = await db.collection(entityName)
       const entityRef = id ? entity.doc(id) : entity.doc();
@@ -62,14 +62,14 @@ export default class WebRtcHelper {
    }
 
 
-   addTracksToLocalStream(peerConnection, localStream) {
+   static addTracksToLocalStream(peerConnection, localStream) {
       document.querySelector('#localVideo').srcObject = localStream;
       localStream.getTracks().forEach(track => {
          peerConnection.addTrack(track, localStream);
       });
    }
 
-   initRemoteStream(peerConnection) {
+   static initRemoteStream(peerConnection) {
       let remoteStream = new MediaStream();
       peerConnection.addEventListener('track', event => {
          log('Got remote track:', event.streams[0]);
@@ -82,7 +82,7 @@ export default class WebRtcHelper {
       return remoteStream;
    }
 
-   gatherLocalIceCandidates(peerConnection, entityRef, collectionName) {
+   static gatherLocalIceCandidates(peerConnection, entityRef, collectionName) {
       const callerCandidatesCollection = entityRef.collection(collectionName);
       peerConnection.addEventListener('icecandidate', event => {
          if (!event.candidate) {
@@ -94,7 +94,7 @@ export default class WebRtcHelper {
       });
    }
 
-   async gatherRemoteIceCandidates(peerConnection, entityRef, remoteCollectionName) {
+   static async gatherRemoteIceCandidates(peerConnection, entityRef, remoteCollectionName) {
       entityRef.collection(remoteCollectionName).onSnapshot(snapshot => {
          snapshot.docChanges().forEach(async change => {
             if (change.type === 'added') {
@@ -121,7 +121,7 @@ export default class WebRtcHelper {
       /// -------
    }
 
-   async hangUp(e, peerConnection, remoteStream, entityName, entityId) {
+   static async hangUp(e, peerConnection, remoteStream, entityName, entityId) {
       const tracks = document.querySelector('#localVideo').srcObject.getTracks();
       tracks.forEach(track => {
          track.stop();

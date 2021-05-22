@@ -4,26 +4,26 @@ import WebRtcHelper from './webRtcHelper.js';
 'use strict';
 
 export default class CallIdUserPeer {
-   helper = null;
+   
+   callConnection = {
+      connection: null,
+      localStream: null,
+      remoteStream: null
+   }
 
-   peerConnection = null;
-   localStream = null;
-   remoteStream = null;
+   messagingChannel = { 
+      connection: null,
+      channel: null,
+      connected: false
+   }
 
-   dcPeerConnection = null;
-   dataChannel = null;
-   dataChannelOpened = false;
-
-   fileSize = null;
-   fileName = null;
-   fileTransferProgress = null;
-   receiveBuffer = [];
-   receivedSize = 0;
-   fileTransferBegin = null;
-
-
-   constructor() {
-      this.helper = new WebRtcHelper();
+   binaryData = {
+      size: null,
+      fileName: null,
+      progress: null,
+      receiveBuffer: [],
+      receivedSize: 0,
+      transferBegin: null
    }
 
    async joinCall(e) {
@@ -35,7 +35,7 @@ export default class CallIdUserPeer {
    }
 
    async joinCallById(e, callId) {
-      let callRef = await this.helper.getDbEntityReference("calls", callId);
+      let callRef = await this.WebRtcHelper.getDbEntityReference("calls", callId);
       const callSnapshot = await callRef.get();
       log('Got call record:', callSnapshot.exists);
       if (!callSnapshot.exists) {
@@ -43,16 +43,16 @@ export default class CallIdUserPeer {
          return;
       }
 
-      this.localStream = await this.helper.openUserMedia(e);
-      this.peerConnection = this.helper.initializePeerConnection();
-      this.helper.addTracksToLocalStream(this.peerConnection, this.localStream);
-      this.helper.gatherLocalIceCandidates(this.peerConnection, callRef, 'calleeCandidates');
-      this.remoteStream = this.helper.initRemoteStream(this.peerConnection);
-      await this.createAnswer(this.peerConnection, callRef);
-      await this.helper.gatherRemoteIceCandidates(this.peerConnection, callRef, 'callerCandidates');
+      this.callConnection.localStream = await this.WebRtcHelper.openUserMedia(e);
+      this.callConnection.connection = this.WebRtcHelper.initializePeerConnection();
+      this.WebRtcHelper.addTracksToLocalStream(this.callConnection.connection, this.callConnection.localStream);
+      this.WebRtcHelper.gatherLocalIceCandidates(this.callConnection.connection, callRef, 'calleeCandidates');
+      this.callConnection.remoteStream = this.WebRtcHelper.initRemoteStream(this.callConnection.connection);
+      await this.createAnswer(this.callConnection.connection, callRef);
+      await this.WebRtcHelper.gatherRemoteIceCandidates(this.callConnection.connection, callRef, 'callerCandidates');
 
-      document.querySelector('#remoteVideo').srcObject = this.remoteStream;
-      document.querySelector('#hangupBtn').addEventListener('click', e => this.helper.hangUp(e, this.peerConnection, this.remoteStream, "calls", callId));
+      document.querySelector('#remoteVideo').srcObject = this.callConnection.remoteStream;
+      document.querySelector('#hangupBtn').addEventListener('click', e => this.WebRtcHelper.hangUp(e, this.callConnection.connection, this.callConnection.remoteStream, "calls", callId));
    }
 
    async createAnswer(peerConnection, entityRef) {
@@ -75,32 +75,32 @@ export default class CallIdUserPeer {
 
    async initDataChannel() {
       let dcId = prompt("Data Channel ID");
-      let dcRef = await this.helper.getDbEntityReference("dataChannels", dcId);
+      let dcRef = await this.WebRtcHelper.getDbEntityReference("dataChannels", dcId);
       if (!(await dcRef.get()).exists) {
          alert(`Data Channel record not found: ${dcId}`);
          log(`Data Channel record not found: ${dcId}`);
          return;
       }
 
-      this.dcPeerConnection = this.helper.initializePeerConnection();
-      await this.helper.gatherLocalIceCandidates(this.dcPeerConnection, dcRef, "calleeCandidates");
-      await this.createAnswer(this.dcPeerConnection, dcRef);
-      await this.helper.gatherRemoteIceCandidates(this.dcPeerConnection, dcRef, "callerCandidates");
+      this.messagingChannel.connection = this.WebRtcHelper.initializePeerConnection();
+      await this.WebRtcHelper.gatherLocalIceCandidates(this.messagingChannel.connection, dcRef, "calleeCandidates");
+      await this.createAnswer(this.messagingChannel.connection, dcRef);
+      await this.WebRtcHelper.gatherRemoteIceCandidates(this.messagingChannel.connection, dcRef, "callerCandidates");
 
-      this.dcPeerConnection.addEventListener('datachannel', event => {
-         this.dataChannel = event.channel;
+      this.messagingChannel.connection.addEventListener('datachannel', event => {
+         this.messagingChannel.channel = event.channel;
          log('data channel received.', event);
 
-         this.dataChannel.addEventListener('open', event => {
-            this.dataChannelOpened = true;
+         this.messagingChannel.channel.addEventListener('open', event => {
+            this.messagingChannel.connected = true;
             log('data channel opened.', event);
          })
-         this.dataChannel.addEventListener('close', event => {
-            this.dataChannelOpened = false;
+         this.messagingChannel.channel.addEventListener('close', event => {
+            this.messagingChannel.connected = false;
             log('data channel closed.', event);
             alert('data channel close event fired on user side.');
          });
-         this.dataChannel.addEventListener('message', event => this.onMessageReceived(event));
+         this.messagingChannel.channel.addEventListener('message', event => this.onMessageReceived(event));
       });
    }
 
@@ -111,34 +111,34 @@ export default class CallIdUserPeer {
          let data = JSON.parse(event.data);
 
          if (data.comingType === Constants.DataChannelTransferType.binaryData) {
-            this.dataChannel.binaryType = Constants.DataChannelTransferType.binaryData;
+            this.messagingChannel.channel.binaryType = Constants.DataChannelTransferType.binaryData;
             this.fileSize = data.data.size;
-            this.fileName = data.data.name;
-            this.fileTransferProgress = document.querySelector('#fileTransferProgress');
-            this.fileTransferProgress.max = this.fileSize;
-            this.receiveBuffer = [];
-            this.receivedSize = 0;
-            this.fileTransferBegin = (new Date()).getTime();
+            this.binaryData.fileName = data.data.name;
+            this.binaryData.progress = document.querySelector('#fileTransferProgress');
+            this.binaryData.progress.max = this.binaryData.size;
+            this.binaryData.receiveBuffer = [];
+            this.binaryData.receivedSize = 0;
+            this.binaryData.transferBegin = (new Date()).getTime();
          }
       } else if (event.data instanceof ArrayBuffer) { // Now binary data is coming
          let data = event.data;
-         this.receiveBuffer.push(data);
-         this.receivedSize += data.byteLength;
-         this.fileTransferProgress.value = this.receivedSize;
+         this.binaryData.receiveBuffer.push(data);
+         this.binaryData.receivedSize += data.byteLength;
+         this.binaryData.progress.value = this.binaryData.receivedSize;
 
          // when upload completed
-         if (this.receivedSize >= this.fileSize) {
-            const blob = new Blob(this.receiveBuffer);
-            this.receiveBuffer = [];
+         if (this.binaryData.receivedSize >= this.binaryData.size) {
+            const blob = new Blob(this.binaryData.receiveBuffer);
+            this.binaryData.receiveBuffer = [];
 
             let downloadAnchor = document.querySelector('#downloadFileAnchor');
             downloadAnchor.href = URL.createObjectURL(blob);
-            downloadAnchor.download = this.fileName;
+            downloadAnchor.download = this.binaryData.fileName;
             downloadAnchor.textContent =
-               `Click to download '${this.fileName}' (${this.fileSize} bytes)`;
+               `Click to download '${this.binaryData.fileName}' (${this.binaryData.size} bytes)`;
             downloadAnchor.style.display = 'block';
 
-            const bitrate = Math.round(this.receivedSize * 8 / ((new Date()).getTime() - this.fileTransferBegin));
+            const bitrate = Math.round(this.binaryData.receivedSize * 8 / ((new Date()).getTime() - this.binaryData.transferBegin));
          }
       }
    }
