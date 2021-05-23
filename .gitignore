@@ -67,3 +67,6 @@ node_modules/
 .idea
 
 .cred
+
+# vscode settings
+.vscode
