@@ -1,4 +1,4 @@
-# Playing Around with WebRTC
+# Video Calling, Messaging with WebRTC
 
 Playing around with video streaming and data (messages, files) channel using TURN and STUN servers.
 
