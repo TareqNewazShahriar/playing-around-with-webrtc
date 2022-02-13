@@ -7,4 +7,4 @@ Playing around with video streaming and data (messages, files) channel using TUR
 * Messaging
 * File transfer
 
-Check out the <a href="https://tareqnewazshahriar.github.io/playing-around-with-webrtc/public" target="_blank">web app</a> hosted on Github.
+Check out the <a href="https://tareqnewazshahriar.github.io/video-calling-messaging-with-webrtc/public" target="_blank">web app</a> hosted on Github.
